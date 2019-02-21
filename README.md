@@ -11,7 +11,7 @@ and may be subject to rebasing without notice.
 ## Hardware
 
 This project has been developed and tested on
-a TTGO ESP32 868/915 MHz LoRa OLED module (version 1),
+a TTGO ESP32 868/915 MHz LoRa OLED module *(version 1 only, see below!),*
 which contains an ESP32 SoC, an RFM95 LoRa radio,
 a 128x64 pixel SSD1306 OLED display, and a LiPo battery charger.
 
@@ -23,8 +23,10 @@ They are available from [AliExpress,](https://www.aliexpress.com/item/2pcs-TTGO-
 [Banggood,](https://www.banggood.com/2Pcs-Wemos-TTGO-LORA32-868915Mhz-ESP32-LoRa-OLED-0_96-Inch-Blue-Display-p-1239769.html)
 and numerous others.
 
-The version 2 module is likely to work as well, but has not yet been tested.
-If you try it, please let me know.
+### *TTGO version 2 module is not supported*
+
+The current code does not work on the TTGO version 2 module due to
+different pin assignments.
 
 ## Radios
 
