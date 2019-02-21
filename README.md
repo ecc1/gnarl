@@ -13,7 +13,7 @@ and may be subject to rebasing without notice.
 This project has been developed and tested on
 a TTGO ESP32 868/915 MHz LoRa OLED module (version 1),
 which contains an ESP32 SoC, an RFM95 LoRa radio,
-a 128x64 pixel SSD1306 blue OLED display, and a LiPo battery charger.
+a 128x64 pixel SSD1306 OLED display, and a LiPo battery charger.
 
 The module has two push-buttons.
 One is hard-wired to reset the board;
@@ -52,7 +52,7 @@ The module can be powered via the micro-USB connector or with a 3.7V
 LiPo battery.
 
 The battery connects to a 2-pin female JST 1.25mm connector.
-Note that this is smaller than the connectors used on Adafruit and
+Note that this is smaller than the 2.0mm connectors used on Adafruit and
 SparkFun LiPo batteries.
 
 ## Software Setup
@@ -68,14 +68,14 @@ Use this command to initialize them:
 git submodule update --init --recursive
 ```
 
-and this command to verify their status:
+and this command to check their status:
 ```
 git submodule status --recursive
 ```
 
-### Set up ESP32 environment
+### Set up the ESP32 environment
 
-1. Follow [these instructions to set up the ESP32 development environment.](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html)
+1. [Follow these instructions to set up the ESP32 development environment.](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html)
 Make sure to install both the toolchain and the ESP-IDF framework,
 and set the `IDF_PATH` variable in your environment appropriately.
 
@@ -100,7 +100,7 @@ In the setup wizard, GNARL should show up when you scan for a RileyLink.
 GNARL will show messages on the OLED display when your phone
 connects and disconnects. Pushing the button will display the current
 status. GNARL may not respond to the button press immediately if it is
-in the midst of communicating with the pump, due to scheduling priorities.
+communicating with the pump, due to scheduling priorities.
 
 ## Building the other applications
 
