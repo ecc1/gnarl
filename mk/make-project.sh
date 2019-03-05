@@ -8,10 +8,20 @@ if [ ! -d "$src" ]; then
     exit 1
 fi
 
-project_is_current() {
+current_for_make() {
     [ -d project ] && \
     [ -f project/Makefile ] && \
     grep ^PROJECT_NAME project/Makefile | grep -q $project
+}
+
+current_for_cmake() {
+    [ -d project ] && \
+    [ -f project/CMakeLists.txt ] && \
+    grep ^project project/CMakeLists.txt | grep -q $project
+}
+
+project_is_current() {
+    current_for_make && current_for_cmake
 }
 
 create_project() {
@@ -21,12 +31,14 @@ create_project() {
 
     ln -s ../components .
     sed "s/xyzzy/$project/" < ../mk/Makefile > Makefile
+    sed "s/xyzzy/$project/" < ../mk/CMakeLists.project > CMakeLists.txt
     cp ../mk/sdkconfig .
 
     mkdir main
     cd main
-    > component.mk
     ln -sv ../../$src/* .
+    > component.mk
+    cp ../../mk/CMakeLists.main CMakeLists.txt
 
     cd ../..
 }
@@ -36,4 +48,4 @@ if ! project_is_current; then
 fi
 
 echo Initial setup of $project project is complete.
-echo Now change to \"project\" subdirectory and run make with desired flags.
+echo 'Now change to the "project" subdirectory and run "make" or "idf.py build".'
