@@ -1,6 +1,6 @@
 default_project = gnarl
 
-projects = $(default_project) $(filter-out $(default_project),$(notdir $(wildcard apps/*)))
+projects = $(default_project) $(filter-out $(default_project),$(notdir $(wildcard src/*)))
 
 $(projects):
 	@mk/make-project.sh $@

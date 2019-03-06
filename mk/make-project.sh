@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 project="$1"
-src="apps/$project"
+src="src/$project"
 
 if [ ! -d "$src" ]; then
     echo "project source directory $src not found"
@@ -30,6 +30,7 @@ create_project() {
     cd project
 
     ln -s ../components .
+    ln -s ../lib .
     sed "s/xyzzy/$project/" < ../mk/Makefile > Makefile
     sed "s/xyzzy/$project/" < ../mk/CMakeLists.project > CMakeLists.txt
     cp ../mk/sdkconfig .
