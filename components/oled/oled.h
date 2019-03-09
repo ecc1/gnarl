@@ -16,3 +16,4 @@ extern void align_center();
 extern void align_center_both();
 
 extern void draw_string(int x, int y, const char *s);
+extern void draw_freq_bar(uint freq, int rssi);

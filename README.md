@@ -123,6 +123,8 @@ This repository contains a few applications ("projects" in ESP-IDF terminology) 
   You must first define the pump serial number as a string constant `PUMP_ID` in the file `pump.h`,
   or by editing `main.c`
 
+* `mmtune` scans the frequency band for best medtronic pump reception
+
 To build the `blink` project, for example:
 
 1. In the top level of this repository, type `make blink`

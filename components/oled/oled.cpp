@@ -69,3 +69,9 @@ void align_center_both() {
 void draw_string(int x, int y, const char *s) {
 	d.drawString(x, y, s);
 }
+
+// Display seems to be 128 x 64 px
+void draw_freq_bar(uint freq, int rssi){
+	uint height_inverted = -1*rssi*0.5 - 3;
+	d.fillRect(2+(freq*10), height_inverted, 6, 64-height_inverted);
+}
