@@ -24,3 +24,5 @@ extern void oled_align_center_both();
 
 extern int oled_string_width(const char *s);
 extern void oled_draw_string(int x, int y, const char *s);
+
+extern void oled_draw_box(int x, int y, int w, int h);

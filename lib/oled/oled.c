@@ -75,6 +75,10 @@ void oled_draw_string(int x, int y, const char *s) {
 	u8g2_DrawStr(&u8g2, x, y, s);
 }
 
+void oled_draw_box(int x, int y, int w, int h) {
+	u8g2_DrawBox(&u8g2, x, y, w, h);
+}
+
 extern uint8_t i2c_callback(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
 extern uint8_t gpio_and_delay_callback(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
 
