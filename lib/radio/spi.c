@@ -1,6 +1,6 @@
 #include <driver/spi_master.h>
-#include <pins_arduino.h>
 
+#include "module.h"
 #include "spi.h"
 
 #define MILLISECONDS	1000

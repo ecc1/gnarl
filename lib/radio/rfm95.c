@@ -3,9 +3,9 @@
 #include <esp_sleep.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <pins_arduino.h>
 #include <rom/uart.h>
 
+#include "module.h"
 #include "rfm95.h"
 #include "spi.h"
 

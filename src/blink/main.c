@@ -2,7 +2,7 @@
 
 #include <driver/gpio.h>
 
-#define LED GPIO_NUM_2 // TTGO LoRa OLED v1 module
+#include "module.h"
 
 #define MILLISECONDS 1000
 

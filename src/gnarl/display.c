@@ -7,6 +7,7 @@
 
 #include "display.h"
 #include "gnarl.h"
+#include "module.h"
 #include "oled.h"
 
 typedef struct {
@@ -108,8 +109,8 @@ void display_init(void) {
 	display_update(SHOW_STATUS, 0);
 
 	// Enable interrupt on button press.
-	gpio_set_direction(GPIO_NUM_0, GPIO_MODE_INPUT);
-	gpio_set_intr_type(GPIO_NUM_0, GPIO_INTR_NEGEDGE);
-	gpio_isr_handler_add(GPIO_NUM_0, button_interrupt, 0);
-	gpio_intr_enable(GPIO_NUM_0);
+	gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
+	gpio_set_intr_type(BUTTON, GPIO_INTR_NEGEDGE);
+	gpio_isr_handler_add(BUTTON, button_interrupt, 0);
+	gpio_intr_enable(BUTTON);
 }

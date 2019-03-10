@@ -5,6 +5,8 @@
 #include <esp_sleep.h>
 #include <rom/uart.h>
 
+#include "module.h"
+
 static void print_wakeup_reason() {
 	esp_sleep_wakeup_cause_t r = esp_sleep_get_wakeup_cause();
 	const char *reason;
@@ -30,10 +32,6 @@ static void print_wakeup_reason() {
 	}
 	printf("wakeup reason: %s\n", reason);
 }
-
-// TTGO LoRa OLED v1 module
-#define LED	GPIO_NUM_2
-#define BUTTON	GPIO_NUM_0
 
 void app_main() {
 	gpio_pad_select_gpio(LED);
