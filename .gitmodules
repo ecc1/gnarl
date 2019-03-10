@@ -1,3 +1,6 @@
 [submodule "components/esp8266-oled-ssd1306"]
 	path = components/esp8266-oled-ssd1306
 	url = https://github.com/ecc1/esp8266-oled-ssd1306
+[submodule "components/ESP32_BLE_Arduino"]
+	path = components/ESP32_BLE_Arduino
+	url = https://github.com/ecc1/ESP32_BLE_Arduino
