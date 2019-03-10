@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLE2904.h>
@@ -30,8 +29,6 @@ class server_callbacks: public BLEServerCallbacks {
 };
 
 extern "C" void app_main() {
-	initArduino();
-
 	BLEDevice::init("ESP32");
 
 	BLEServer* srv = BLEDevice::createServer();
