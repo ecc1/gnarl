@@ -58,20 +58,20 @@ static void update(display_command_t cmd) {
 	oled_on();
 	oled_clear();
 
-	font_medium();
-        align_center();
-        draw_string(64, 10, connected ? "Connected" : "Disonnected");
+	oled_font_medium();
+        oled_align_center();
+        oled_draw_string(64, 15, connected ? "Connected" : "Disonnected");
 
-	font_small();
-	align_left();
-        draw_string(5, 32, "Last command:");
-        draw_string(5, 45, "Pump RSSI:");
-	align_right();
+	oled_font_small();
+	oled_align_left();
+        oled_draw_string(5, 40, "Last command:");
+        oled_draw_string(5, 55, "Pump RSSI:");
+	oled_align_right();
 	char buf[16];
 	format_time_ago(buf);
-        draw_string(122, 32, buf);
+        oled_draw_string(122, 40, buf);
 	sprintf(buf, "%d", pump_rssi);
-        draw_string(122, 45, buf);
+        oled_draw_string(122, 55, buf);
 
         oled_update();
 	usleep(DISPLAY_TIMEOUT*SECONDS);
