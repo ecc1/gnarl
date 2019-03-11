@@ -30,6 +30,7 @@ create_project() {
     cd project
 
     ln -s ../components .
+    ln -s ../include .
     ln -s ../lib .
     sed "s/xyzzy/$project/" < ../mk/Makefile > Makefile
     sed "s/xyzzy/$project/" < ../mk/CMakeLists.project > CMakeLists.txt
@@ -38,7 +39,7 @@ create_project() {
     mkdir main
     cd main
     ln -sv ../../$src/* .
-    > component.mk
+    cp ../../mk/component.mk component.mk
     cp ../../mk/CMakeLists.main CMakeLists.txt
 
     cd ../..

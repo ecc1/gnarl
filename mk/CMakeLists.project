@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(board_variant ttgo-lora32-v1)
-
-# Make sure board-specific pin definitions are used instead of the ones in variants/esp32
-get_filename_component(board_variant_dir "components/arduino-esp32/variants/${board_variant}" ABSOLUTE)
-include_directories(BEFORE ${board_variant_dir})
+include_directories(BEFORE include)
 
 set(EXTRA_COMPONENT_DIRS lib)
 

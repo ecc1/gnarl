@@ -1,2 +1,1 @@
 COMPONENT_ADD_INCLUDEDIRS = .
-COMPONENT_EXTRA_INCLUDES = $(PROJECT_PATH)/components/arduino-esp32/variant/ttgo-lora32-v1
