@@ -61,8 +61,7 @@ SparkFun LiPo batteries.
 
 ### Initialize git submodules
 
-This repository contains two git submodules (in the `components` subdirectory),
-and one of them (`arduino-esp32`) itself contains two git submodules.
+This repository contains two git submodules (in the `components` subdirectory).
 Unless you cloned this repository with the `--recursive` option,
 those submodules won't be initialized yet.
 Use this command to initialize them:
@@ -113,22 +112,25 @@ This repository contains a few applications ("projects" in ESP-IDF terminology) 
 * `sleep` uses the ESP32 "lightweight sleep" mode and wakes up when a
   timer goes off or the button is pressed
 
-* `hello` draws "Hello" on the OLED display
+* `oledtest` draws text in various sizes on the OLED display
 
 * `regtest` reads the RFM69 registers and prints them on the serial console
 
-* `sniffer` receives Medtronic packets and prints them on the serial console
+* `sniffer` receives Medtronic packets and prints them on the serial console.
+  You must first define the pump frequency by editing `main.c`
 
 * `pumpstat` displays the status of a Medtronic insulin pump when you press the button.
-  You must first define the pump serial number as a string constant `PUMP_ID` in the file `pump.h`,
-  or by editing `main.c`
+  You must first define the pump frequency and serial number in the file `pump.h`
 
-To build the `blink` project, for example:
+* `bletest` is a simple BLE server that can be queried with a tool like
+  [nRF Connect](https://www.nordicsemi.com/Software-and-Tools/Development-Tools/nRF-Connect-for-mobile)
+
+To build the `blink` application, for example:
 
 1. In the top level of this repository, type `make blink`
 
 1. Change to the `project` directory and follow the same steps as above
-   for building and flashing GNARL
+   for building and flashing (`make -j` and `make flash`)
 
 After flashing applications that print information on the serial console,
 run `make monitor` to see the output.
