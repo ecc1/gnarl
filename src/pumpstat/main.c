@@ -1,7 +1,9 @@
-#include <Arduino.h>
 #include <unistd.h>
 
+#include <esp_sleep.h>
+
 #include "commands.h"
+#include "module.h"
 #include "oled.h"
 #include "pump.h"
 #include "rfm95.h"
@@ -36,22 +38,22 @@ char str[100];
 
 void display_info() {
 	oled_clear();
-	font_medium();
-	align_left();
+	oled_font_medium();
+	oled_align_left();
 	sprintf(str, "%d.%d U/hr  %d min", FP1(basal_rate), basal_minutes);
-	draw_string(0, 0, str);
+	oled_draw_string(0, 20, str);
 	sprintf(str, "%d.%dU  %d.%02dV", FP1(reservoir_level), FP2(battery_level));
-	draw_string(0, 21, str);
+	oled_draw_string(0, 40, str);
 	sprintf(str, "model %d pump", model);
-	draw_string(0, 42, str);
+	oled_draw_string(0, 60, str);
 	oled_update();
 }
 
 void splash() {
 	oled_on();
-	font_large();
-	align_center_both();
-	draw_string(64, 32, "Hello");
+	oled_font_large();
+	oled_align_center();
+	oled_draw_string(64, 44, "Hello");
 	oled_update();
 }
 
@@ -59,9 +61,6 @@ void splash() {
 #define DISPLAY_TIMEOUT	(5*SECONDS)
 
 void app_main() {
-	initArduino();
-	pinMode(LED_BUILTIN, OUTPUT);
-	digitalWrite(LED_BUILTIN, HIGH);
 	oled_init();
 	splash();
 	parse_pump_id(PUMP_ID);
@@ -72,6 +71,6 @@ void app_main() {
 	display_info();
 	usleep(DISPLAY_TIMEOUT);
 	// Wake up on button press.
-	esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, LOW);
+	esp_sleep_enable_ext0_wakeup(BUTTON, 0);
 	esp_deep_sleep_start();
 }
