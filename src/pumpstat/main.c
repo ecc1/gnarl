@@ -8,7 +8,12 @@
 #include "pump.h"
 #include "rfm95.h"
 
+/* Put appropriate versions of the following two definitions in "pump.h":
+
 #define PUMP_FREQUENCY	916600000
+#define PUMP_ID		"123456"
+
+*/
 
 int basal_rate, basal_minutes;
 int reservoir_level;

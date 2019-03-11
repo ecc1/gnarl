@@ -6,6 +6,7 @@
 
 #include "rfm95.h"
 
+// Change the following definition to the appropriate value.
 #define PUMP_FREQUENCY	916600000
 
 #define TIMEOUT 60*1000	// 1 minute, in milliseconds
