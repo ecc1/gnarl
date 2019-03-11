@@ -24,31 +24,47 @@ void oled_update() {
 	u8g2_SendBuffer(&u8g2);
 }
 
-void font_small() {
+int oled_font_width() {
+	return u8g2_GetMaxCharWidth(&u8g2);
+}
+
+int oled_font_ascent() {
+	return u8g2_GetAscent(&u8g2);
+}
+
+int oled_font_descent() {
+	return -u8g2_GetDescent(&u8g2);
+}
+
+void oled_font_small() {
 	u8g2_SetFont(&u8g2, u8g2_font_helvR08_tr);
 }
 
-void font_medium() {
+void oled_font_medium() {
 	u8g2_SetFont(&u8g2, u8g2_font_helvR12_tr);
 }
 
-void font_large() {
+void oled_font_large() {
 	u8g2_SetFont(&u8g2, u8g2_font_helvR24_tr);
 }
 
-void align_left() {
+void oled_align_left() {
 	align_mode = LEFT;
 }
 
-void align_right() {
+void oled_align_right() {
 	align_mode = RIGHT;
 }
 
-void align_center() {
+void oled_align_center() {
 	align_mode = CENTER;
 }
 
-void draw_string(int x, int y, const char *s) {
+int oled_string_width(const char *s) {
+	return u8g2_GetStrWidth(&u8g2, s);
+}
+
+void oled_draw_string(int x, int y, const char *s) {
 	if (align_mode != LEFT) {
 		int w = u8g2_GetStrWidth(&u8g2, s);
 		if (align_mode == CENTER) {
