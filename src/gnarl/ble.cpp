@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLE2902.h>

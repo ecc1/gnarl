@@ -1,4 +1,5 @@
-#include <Arduino.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #include "display.h"
 #include "gnarl.h"
@@ -7,8 +8,6 @@
 #define PUMP_FREQUENCY 916600000
 
 void app_main() {
-	initArduino();
-
 	rfm95_init();
 	uint8_t v = read_version();
 	ESP_LOGD(TAG, "radio version %d.%d", version_major(v), version_minor(v));
