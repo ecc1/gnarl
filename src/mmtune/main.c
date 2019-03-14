@@ -69,7 +69,7 @@ void app_main() {
 	int best_rssi = -128;
 	uint32_t best_freq = 0;
 	for (int i = 0; i <= 12; i++) {
-		uint32_t cur_freq = PUMP_FREQUENCY_START + 50000*i;
+		uint32_t cur_freq = MMTUNE_START + 50000*i;
 		int rssi = try_frequency(cur_freq);
 		if (rssi > best_rssi) {
 			best_rssi = rssi;

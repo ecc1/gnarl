@@ -116,14 +116,15 @@ This repository contains a few applications ("projects" in ESP-IDF terminology) 
 
 * `regtest` reads the RFM69 registers and prints them on the serial console
 
-* `sniffer` receives Medtronic packets and prints them on the serial console.
-  You must first define the pump frequency by editing `main.c`
+* `sniffer` receives Medtronic packets and prints them on the serial console
 
-* `pumpstat` displays the status of a Medtronic insulin pump when you press the button.
-  You must first define the pump frequency and serial number in the file `pump.h`
+* `pumpstat` displays the status of a Medtronic insulin pump when you press the button
 
 * `bletest` is a simple BLE server that can be queried with a tool like
   [nRF Connect](https://www.nordicsemi.com/Software-and-Tools/Development-Tools/nRF-Connect-for-mobile)
+
+* `mmtune` finds the frequency at which the pump responds
+  with the strongest signal and displays the results graphically
 
 To build the `blink` application, for example:
 
@@ -134,3 +135,13 @@ To build the `blink` application, for example:
 
 After flashing applications that print information on the serial console,
 run `make monitor` to see the output.
+
+### Pump-specific configuration
+
+Some of the applications require the pump serial number or frequency
+to be defined in the `include/pump.h` file.
+It should look like this:
+
+	#define PUMP_ID		"123456"	// pump serial number (note that this is a string constant)
+	#define PUMP_FREQUENCY	916500000	// pump frequency
+	#define MMTUNE_START	916300000	// starting frequency for mmtune scans
