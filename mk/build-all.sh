@@ -3,6 +3,8 @@
 gnarl_dir=$(readlink -f $(dirname $0)/..)
 echo "GNARL top level: $gnarl_dir"
 
+(cd $IDF_PATH && echo "ESP-IDF version: $(git describe --abbrev=0)")
+
 projects=$(basename -a $gnarl_dir/src/*)
 
 nice_make() {
@@ -13,14 +15,21 @@ nice_cmake() {
     ionice -c3 nice idf.py build
 }
 
-for p in $projects; do
-    echo "Building $p with make"
-    logfile=make.$p.log
+build() {
+    proj="$1"
+    kind="$2"
+    logfile=$kind.$proj.log
     rm -fr project
-    (make $p && cd project && nice_make) > $logfile 2>&1
+    echo -n "Building $proj with $kind ... "
+    if (make $proj && cd project && nice_$kind) > $logfile 2>&1 ; then
+	echo "OK"
+    else
+	echo "FAILED"
+	echo "See $logfile for details"
+    fi
+}
 
-    echo "Building $p with CMake"
-    logfile=cmake.$p.log
-    rm -fr project
-    (make $p && cd project && nice_cmake) > $logfile 2>&1
+for p in $projects; do
+    build $p make
+    build $p cmake
 done
