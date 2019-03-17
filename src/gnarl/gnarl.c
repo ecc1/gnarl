@@ -1,11 +1,11 @@
-#include <esp_log.h>
-#include <esp_timer.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/queue.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <esp_timer.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
+#include <freertos/task.h>
 
 #include "display.h"
 #include "gnarl.h"
@@ -86,13 +86,13 @@ static void send_packet(uint8_t *data, int len, int repeat_count, int delay_ms) 
 		ESP_LOGE(TAG, "send_packet: len == 0");
 		return;
 	}
-#if DEBUG
-	printf("sending %d bytes:", len);
-	for (int i = 0; i < len; i++) {
-		printf(" %02X", data[i]);
+	if (LOG_LOCAL_LEVEL >= ESP_LOG_DEBUG) {
+		printf("sending %d bytes:", len);
+		for (int i = 0; i < len; i++) {
+			printf(" %02X", data[i]);
+		}
+		printf("\n");
 	}
-	printf("\n");
-#endif
 	transmit(data, len);
 	while (repeat_count > 0) {
 		usleep(delay_ms  *MILLISECONDS);
@@ -176,7 +176,8 @@ static void check_frequency() {
 }
 
 static void update_register(const uint8_t *buf, int len) {
-	if (len != 2) {
+	// AAPS sends 2 bytes, Loop sends 10
+	if (len < 2) {
 		ESP_LOGE(TAG, "update_register: len = %d", len);
 		return;
 	}
@@ -251,7 +252,6 @@ static void gnarl_loop() {
 
 void start_gnarl_task() {
 	request_queue = xQueueCreate(QUEUE_LENGTH, sizeof(rfspy_request_t));
-	assert(request_queue != 0);
 	// Start radio task with high priority to avoid receiving truncated packets.
 	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, 24, 0);
 }

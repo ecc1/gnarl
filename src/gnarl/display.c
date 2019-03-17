@@ -1,9 +1,10 @@
-#include <esp_timer.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/queue.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <esp_timer.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
+#include <freertos/task.h>
 
 #include "display.h"
 #include "gnarl.h"
@@ -104,7 +105,6 @@ void display_update(display_op_t op, int arg) {
 void display_init(void) {
 	oled_init();
 	display_queue = xQueueCreate(QUEUE_LENGTH, sizeof(display_command_t));
-	assert(display_queue != 0);
 	xTaskCreate(display_loop, "display", 2048, 0, 10, 0);
 	display_update(SHOW_STATUS, 0);
 
