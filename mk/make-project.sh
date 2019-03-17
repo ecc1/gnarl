@@ -35,6 +35,7 @@ create_project() {
     sed "s/xyzzy/$project/" < ../mk/Makefile > Makefile
     sed "s/xyzzy/$project/" < ../mk/CMakeLists.project > CMakeLists.txt
     cp ../mk/sdkconfig .
+    cp ../mk/partitions.csv .
 
     mkdir main
     cd main
