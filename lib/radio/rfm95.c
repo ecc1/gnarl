@@ -1,5 +1,7 @@
 #include <unistd.h>
 
+#define LOG_LOCAL_LEVEL	ESP_LOG_DEBUG
+#include <esp_log.h>
 #include <esp_sleep.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -222,9 +224,15 @@ static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 	}
 	last_rssi = read_register(REG_RSSI);
 	int n = 0;
+	int w = 0;
 	while (n < count) {
 		if (fifo_empty()) {
-			usleep(1*MILLISECONDS);
+			usleep(500);
+			w++;
+			if (w >= MAX_WAIT) {
+				ESP_LOGD("rfm95", "max RX FIFO wait reached");
+				break;
+			}
 			continue;
 		}
 		uint8_t b = recv_byte();
@@ -232,6 +240,7 @@ static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 			break;
 		}
 		buf[n++] = b;
+		w = 0;
 	}
 	set_mode_sleep();
 	clear_fifo();
