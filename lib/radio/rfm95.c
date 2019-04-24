@@ -290,11 +290,11 @@ uint32_t read_frequency() {
 	uint8_t frf[3];
 	read_burst(REG_FRF_MSB, frf, sizeof(frf));
 	uint32_t f = (frf[0] << 16) | (frf[1] << 8) | frf[2];
-	return ((uint64_t)(f) * FXOSC) >> 19;
+	return ((uint64_t)f * FXOSC) >> 19;
 }
 
 void set_frequency(uint32_t freq_hz) {
-	uint32_t f = ((((uint64_t)freq_hz) << 19) + FXOSC/2) / FXOSC;
+	uint32_t f = (((uint64_t)freq_hz << 19) + FXOSC/2) / FXOSC;
 	uint8_t frf[3];
 	frf[0] = f >> 16;
 	frf[1] = f >> 8;
