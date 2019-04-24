@@ -15,9 +15,15 @@
 #define REG_FRF_MSB		0x06
 #define REG_FRF_MID		0x07
 #define REG_FRF_LSB		0x08
+#define REG_RX_CONFIG		0x0D
 #define REG_RSSI_CONFIG		0x0E
 #define REG_RSSI		0x11
 #define REG_RX_BW		0x12
+#define REG_OOK_PEAK		0x14
+#define REG_OOK_FIX		0x15
+#define REG_OOK_AVG		0x16
+#define REG_FEI_MSB		0x1D
+#define REG_FEI_LSB		0x1E
 #define REG_PREAMBLE_DETECT	0x1F
 #define REG_PREAMBLE_MSB	0x25
 #define REG_PREAMBLE_LSB	0x26
@@ -48,8 +54,20 @@
 #define MODE_FSRX		4
 #define MODE_RX			5
 
+// REG_RX_CONFIG
+#define AFC_AUTO_ON		(1 << 4)
+#define AGC_AUTO_ON		(1 << 3)
+#define RX_TRIGGER_PREAMBLE	(6 << 0)
+#define RX_TRIGGER_RSSI		(1 << 0)
+
 // REG_RX_BW
 #define RX_BW_MANT_SHIFT	3
+
+// REG_OOK_AVG
+#define OOK_AVG_OFFSET_0DB	(0 << 2)
+#define OOK_AVG_OFFSET_2DB	(1 << 2)
+#define OOK_AVG_OFFSET_4DB	(2 << 2)
+#define OOK_AVG_OFFSET_6DB	(3 << 2)
 
 // REG_PREAMBLE_DETECT
 #define PREAMBLE_DETECT_ON	(1 << 7)
