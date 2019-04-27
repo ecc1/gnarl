@@ -1,3 +1,4 @@
+#include <driver/gpio.h>
 #include <driver/spi_master.h>
 
 #include "module.h"
