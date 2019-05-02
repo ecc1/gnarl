@@ -11,8 +11,6 @@
 #include "gnarl.h"
 #include "rfm95.h"
 
-#define MILLISECONDS	1000
-
 #define MAX_PARAM_LEN	10
 #define MAX_PACKET_LEN	107
 
@@ -62,10 +60,6 @@ typedef struct {
 
 static response_packet_t rx_buf;
 
-static void send_data(const char *str) {
-	send_bytes((uint8_t *)str, strlen(str));
-}
-
 static inline void swap_bytes(uint8_t *p, uint8_t *q) {
 	uint8_t t = *p;
 	*p = *q;
@@ -86,13 +80,7 @@ static void send_packet(uint8_t *data, int len, int repeat_count, int delay_ms) 
 		ESP_LOGE(TAG, "send_packet: len == 0");
 		return;
 	}
-	if (LOG_LOCAL_LEVEL >= ESP_LOG_DEBUG) {
-		printf("sending %d bytes:", len);
-		for (int i = 0; i < len; i++) {
-			printf(" %02X", data[i]);
-		}
-		printf("\n");
-	}
+	print_bytes("sending %d bytes:", data, len);
 	transmit(data, len);
 	while (repeat_count > 0) {
 		usleep(delay_ms  *MILLISECONDS);
@@ -133,13 +121,7 @@ static void send_and_listen(const uint8_t *buf, int len) {
 		send_bytes(&err, 1);
 		return;
 	}
-#if DEBUG
-	printf("received %d bytes:", n);
-	for (int i = 0; i < n; i++) {
-		printf(" %02X", rx_buf.packet[i]);
-	}
-	printf(" (RSSI = %d)\n", rssi);
-#endif
+	print_bytes("send_and_listen: received %d bytes:", rx_buf.packet, n);
 	rx_buf.rssi = raw_rssi(rssi);
 	if (rx_buf.rssi == 0) {
 		rx_buf.rssi = 1;
@@ -193,10 +175,11 @@ static void update_register(const uint8_t *buf, int len) {
 		ESP_LOGD(TAG, "update_register: addr %02X ignored", addr);
 		break;
 	}
-	send_data("\x01");
+	uint8_t ack = 1;
+	send_bytes(&ack, sizeof(ack));
 }
 
-void rfspy_command(uint8_t *buf, int count) {
+void rfspy_command(const uint8_t *buf, int count) {
 	if (count == 0) {
 		ESP_LOGE(TAG, "rfspy_command: count == 0");
 		return;
@@ -215,8 +198,7 @@ void rfspy_command(uint8_t *buf, int count) {
 		ESP_LOGE(TAG, "rfspy_command: cannot queue request for command %d", cmd);
 		return;
 	}
-	ESP_LOGD(TAG, "rfspy_command: queued command %d, queue length = %d",
-		 cmd, uxQueueMessagesWaiting(request_queue));
+	ESP_LOGD(TAG, "rfspy_command %d, queue length %d", cmd, uxQueueMessagesWaiting(request_queue));
 }
 
 static void gnarl_loop() {
@@ -225,13 +207,12 @@ static void gnarl_loop() {
 	for (;;) {
 		rfspy_request_t req;
 		if (!xQueueReceive(request_queue, &req, pdMS_TO_TICKS(timeout_ms))) {
-			ESP_LOGD(TAG, "gnarl_loop: queue empty");
 			continue;
 		}
 		switch (req.command) {
 		case cmd_get_version:
 			ESP_LOGD(TAG, "cmd_get_version");
-			send_data(SUBG_RFSPY_VERSION);
+			send_bytes((const uint8_t *)SUBG_RFSPY_VERSION, strlen(SUBG_RFSPY_VERSION));
 			break;
 		case cmd_send_and_listen:
 			ESP_LOGD(TAG, "cmd_send_and_listen");
