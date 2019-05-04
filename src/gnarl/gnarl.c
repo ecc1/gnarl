@@ -43,6 +43,18 @@ typedef enum {
 } rfspy_result_t;
 
 typedef struct {
+	uint8_t listen_channel;
+	uint32_t timeout_ms;
+} get_packet_cmd_t;
+
+typedef struct {
+	uint8_t send_channel;
+	uint8_t repeat_count;
+	uint8_t delay_ms;
+	uint8_t packet[];
+} send_packet_cmd_t;
+
+typedef struct {
 	uint8_t send_channel;
 	uint8_t repeat_count;
 	uint8_t delay_ms;
@@ -73,20 +85,18 @@ static inline void reverse_four_bytes(uint32_t *n) {
 }
 
 static void send_packet(uint8_t *data, int len, int repeat_count, int delay_ms) {
-	while (len > 0 && data[len-1] == 0) {
-		len--;
-	}
-	if (len == 0) {
-		ESP_LOGE(TAG, "send_packet: len == 0");
-		return;
-	}
-	print_bytes("sending %d bytes:", data, len);
+	print_bytes("send_packet: sending %d bytes:", data, len);
 	transmit(data, len);
 	while (repeat_count > 0) {
 		usleep(delay_ms  *MILLISECONDS);
 		transmit(data, len);
 		repeat_count--;
 	}
+}
+
+static void send_ack() {
+	uint8_t ack = 1;
+	send_bytes(&ack, sizeof(ack));
 }
 
 // Transform an RSSI value back into the raw encoding that the TI CC111x radios use.
@@ -96,12 +106,49 @@ static uint8_t raw_rssi(int rssi) {
 	return (rssi + rssi_offset) * 2;
 }
 
+static void rx_common(int n, int rssi) {
+	if (n == 0) {
+		ESP_LOGD(TAG, "RX: timeout");
+		uint8_t err = ERROR_RX_TIMEOUT;
+		send_bytes(&err, 1);
+		return;
+	}
+	print_bytes("RX: received %d bytes:", rx_buf.packet, n);
+	rx_buf.rssi = raw_rssi(rssi);
+	if (rx_buf.rssi == 0) {
+		rx_buf.rssi = 1;
+	}
+	rx_buf.packet_count = rx_packet_count();
+	if (rx_buf.packet_count == 0) {
+		rx_buf.packet_count = 1;
+	}
+	send_bytes((uint8_t *)&rx_buf, 2 + n);
+}
+
+static void get_packet(const uint8_t *buf, int len) {
+	get_packet_cmd_t *p = (get_packet_cmd_t *)buf;
+	reverse_four_bytes(&p->timeout_ms);
+	ESP_LOGD(TAG, "get_packet: listen_channel %d timeout_ms %d",
+		 p->listen_channel, p->timeout_ms);
+	int n = receive(rx_buf.packet, sizeof(rx_buf.packet), p->timeout_ms);
+	rx_common(n, read_rssi());
+}
+
+static void send(const uint8_t *buf, int len) {
+	send_packet_cmd_t *p = (send_packet_cmd_t *)buf;
+	ESP_LOGD(TAG, "send: len %d send_channel %d repeat_count %d delay_ms %d",
+		 len, p->send_channel, p->repeat_count, p->delay_ms);
+	len -= (p->packet - (uint8_t *)p);
+	send_packet(p->packet, len, p->repeat_count, p->delay_ms);
+	send_ack();
+}
+
 static void send_and_listen(const uint8_t *buf, int len) {
 	send_and_listen_cmd_t *p = (send_and_listen_cmd_t *)buf;
 	reverse_four_bytes(&p->timeout_ms);
-	ESP_LOGD(TAG, "len %d send_channel %d repeat_count %d delay_ms %d",
+	ESP_LOGD(TAG, "send_and_listen: len %d send_channel %d repeat_count %d delay_ms %d",
 		 len, p->send_channel, p->repeat_count, p->delay_ms);
-	ESP_LOGD(TAG, "listen_channel %d timeout_ms %d retry_count %d",
+	ESP_LOGD(TAG, "send_and_listen: listen_channel %d timeout_ms %d retry_count %d",
 		 p->listen_channel, p->timeout_ms, p->retry_count);
 	len -= (p->packet - (uint8_t *)p);
 	send_packet(p->packet, len, p->repeat_count, p->delay_ms);
@@ -115,31 +162,16 @@ static void send_and_listen(const uint8_t *buf, int len) {
 		n = receive(rx_buf.packet, sizeof(rx_buf.packet), p->timeout_ms);
 		rssi = read_rssi();
 	}
-	if (n == 0) {
-		ESP_LOGD(TAG, "send_and_listen: timeout");
-		uint8_t err = ERROR_RX_TIMEOUT;
-		send_bytes(&err, 1);
-		return;
-	}
-	print_bytes("send_and_listen: received %d bytes:", rx_buf.packet, n);
-	rx_buf.rssi = raw_rssi(rssi);
-	if (rx_buf.rssi == 0) {
-		rx_buf.rssi = 1;
-	}
-	rx_buf.packet_count = rx_packet_count();
-	if (rx_buf.packet_count == 0) {
-		rx_buf.packet_count = 1;
-	}
-	send_bytes((uint8_t *)&rx_buf, 2 + n);
+	rx_common(n, rssi);
 }
 
 static uint8_t fr[3];
 
 static inline bool valid_frequency(uint32_t f) {
-	if (863000000 <= f && f <= 870000000) {
+	if (863*MHz <= f && f <= 870*MHz) {
 		return true;
 	}
-	if (910000000 <= f && f <= 920000000) {
+	if (910*MHz <= f && f <= 920*MHz) {
 		return true;
 	}
 	return false;
@@ -148,7 +180,7 @@ static inline bool valid_frequency(uint32_t f) {
 // Change the radio frequency if the current register values make sense.
 static void check_frequency() {
 	uint32_t f = ((uint32_t)fr[0] << 16) + ((uint32_t)fr[1] << 8) + ((uint32_t)fr[2]);
-	uint32_t freq = (uint32_t)(((uint64_t)f * 24000000) >> 16);
+	uint32_t freq = (uint32_t)(((uint64_t)f * 24*MHz) >> 16);
 	if (valid_frequency(freq)) {
 		ESP_LOGD(TAG, "setting frequency to %d Hz", freq);
 		set_frequency(freq);
@@ -175,8 +207,16 @@ static void update_register(const uint8_t *buf, int len) {
 		ESP_LOGD(TAG, "update_register: addr %02X ignored", addr);
 		break;
 	}
-	uint8_t ack = 1;
-	send_bytes(&ack, sizeof(ack));
+	send_ack();
+}
+
+static void led_mode(const uint8_t *buf, int len) {
+	if (len < 2) {
+		ESP_LOGE(TAG, "led_mode: len = %d", len);
+		return;
+	}
+	ESP_LOGD(TAG, "led_mode: led %02X mode %02X", buf[0], buf[1]);
+	send_ack();
 }
 
 void rfspy_command(const uint8_t *buf, int count) {
@@ -203,16 +243,28 @@ void rfspy_command(const uint8_t *buf, int count) {
 
 static void gnarl_loop() {
 	ESP_LOGD(TAG, "starting gnarl_loop");
-	const int timeout_ms = 60000;
+	const int timeout_ms = 60*MILLISECONDS;
 	for (;;) {
 		rfspy_request_t req;
 		if (!xQueueReceive(request_queue, &req, pdMS_TO_TICKS(timeout_ms))) {
 			continue;
 		}
 		switch (req.command) {
+		case cmd_get_state:
+			ESP_LOGD(TAG, "cmd_get_state");
+			send_bytes((const uint8_t *)STATE_OK, strlen(STATE_OK));
+			break;
 		case cmd_get_version:
 			ESP_LOGD(TAG, "cmd_get_version");
 			send_bytes((const uint8_t *)SUBG_RFSPY_VERSION, strlen(SUBG_RFSPY_VERSION));
+			break;
+		case cmd_get_packet:
+			ESP_LOGD(TAG, "cmd_get_packet");
+			get_packet(req.data, req.length);
+			break;
+		case cmd_send_packet:
+			ESP_LOGD(TAG, "cmd_send_packet");
+			send(req.data, req.length);
 			break;
 		case cmd_send_and_listen:
 			ESP_LOGD(TAG, "cmd_send_and_listen");
@@ -223,11 +275,15 @@ static void gnarl_loop() {
 			ESP_LOGD(TAG, "cmd_update_register");
 			update_register(req.data, req.length);
 			break;
+		case cmd_led:
+			ESP_LOGD(TAG, "cmd_led");
+			led_mode(req.data, req.length);
+			break;
 		default:
 			ESP_LOGE(TAG, "unimplemented rfspy command %d", req.command);
 			break;
 		}
-		display_update(COMMAND_TIME, esp_timer_get_time() / 1000000);
+		display_update(COMMAND_TIME, esp_timer_get_time()/SECONDS);
 	}
 }
 
