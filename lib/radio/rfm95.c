@@ -245,6 +245,13 @@ static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 	set_mode_sleep();
 	clear_fifo();
 	gpio_intr_disable(DIO2);
+	if (n > 0) {
+		// Remove spurious final byte consisting of just one or two high bits.
+		uint8_t b = buf[n-1];
+		if (b == 0x80 || b == 0xC0) {
+			n--;
+		}
+	}
 	return n;
 }
 
