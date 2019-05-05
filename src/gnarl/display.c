@@ -1,3 +1,5 @@
+#include "gnarl.h"
+
 #include <string.h>
 #include <unistd.h>
 
@@ -7,7 +9,6 @@
 #include <freertos/task.h>
 
 #include "display.h"
-#include "gnarl.h"
 #include "module.h"
 #include "oled.h"
 
@@ -24,7 +25,6 @@ static int connected = false;
 static int pump_rssi;
 static int command_time;  // seconds
 
-#define SECONDS		1000000
 #define DISPLAY_TIMEOUT	5  // seconds
 
 static void format_time_ago(char *buf) {
@@ -61,7 +61,7 @@ static void update(display_command_t cmd) {
 
 	oled_font_medium();
         oled_align_center();
-        oled_draw_string(64, 15, connected ? "Connected" : "Disonnected");
+        oled_draw_string(64, 15, connected ? "Connected" : "Disconnected");
 
 	oled_font_small();
 	oled_align_left();
