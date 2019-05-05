@@ -1,3 +1,5 @@
+#include "gnarl.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -8,7 +10,6 @@
 #include <freertos/task.h>
 
 #include "display.h"
-#include "gnarl.h"
 #include "rfm95.h"
 
 #define MAX_PARAM_LEN	10
@@ -251,32 +252,32 @@ static void gnarl_loop() {
 		}
 		switch (req.command) {
 		case cmd_get_state:
-			ESP_LOGD(TAG, "cmd_get_state");
+			ESP_LOGI(TAG, "cmd_get_state");
 			send_bytes((const uint8_t *)STATE_OK, strlen(STATE_OK));
 			break;
 		case cmd_get_version:
-			ESP_LOGD(TAG, "cmd_get_version");
+			ESP_LOGI(TAG, "cmd_get_version");
 			send_bytes((const uint8_t *)SUBG_RFSPY_VERSION, strlen(SUBG_RFSPY_VERSION));
 			break;
 		case cmd_get_packet:
-			ESP_LOGD(TAG, "cmd_get_packet");
+			ESP_LOGI(TAG, "cmd_get_packet");
 			get_packet(req.data, req.length);
 			break;
 		case cmd_send_packet:
-			ESP_LOGD(TAG, "cmd_send_packet");
+			ESP_LOGI(TAG, "cmd_send_packet");
 			send(req.data, req.length);
 			break;
 		case cmd_send_and_listen:
-			ESP_LOGD(TAG, "cmd_send_and_listen");
+			ESP_LOGI(TAG, "cmd_send_and_listen");
 			send_and_listen(req.data, req.length);
 			display_update(PUMP_RSSI, read_rssi());
 			break;
 		case cmd_update_register:
-			ESP_LOGD(TAG, "cmd_update_register");
+			ESP_LOGI(TAG, "cmd_update_register");
 			update_register(req.data, req.length);
 			break;
 		case cmd_led:
-			ESP_LOGD(TAG, "cmd_led");
+			ESP_LOGI(TAG, "cmd_led");
 			led_mode(req.data, req.length);
 			break;
 		default:
