@@ -1,6 +1,6 @@
-#include <unistd.h>
-
 #include "gnarl.h"
+
+#include <unistd.h>
 
 #include <esp_nimble_hci.h>
 #include <esp_timer.h>
@@ -50,6 +50,7 @@ static ble_gatt_access_fn led_mode_access;
 static ble_gatt_access_fn firmware_version_access;
 static ble_gatt_access_fn no_access;
 
+static bool connected;
 static uint16_t connection_handle;
 
 static uint16_t response_count_notify_handle;
@@ -165,11 +166,12 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 	switch (e->type) {
 	case BLE_GAP_EVENT_CONNECT:
 		if (e->connect.status != 0) {
-			// Connection failed; resume advertising.
 			ESP_LOGE(TAG, "connection failed");
 			advertise();
 			return 0;
 		}
+		connected = true;
+		display_update(CONNECTED, true);
 		connection_handle = e->connect.conn_handle;
 		ESP_LOGI(TAG, "connected");
 		ESP_LOGD(TAG, "connection handle %04X", connection_handle);
@@ -177,7 +179,8 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 		ESP_LOGD(TAG, "timer tick notify handle %04X", timer_tick_notify_handle);
 		break;
 	case BLE_GAP_EVENT_DISCONNECT:
-		// Connection terminated; resume advertising.
+		connected = false;
+		display_update(CONNECTED, false);
 		ESP_LOGD(TAG, "disconnected");
 		advertise();
 		break;
@@ -263,7 +266,9 @@ static void timer_tick_callback(void *arg) {
 	timer_tick++;
 	ESP_LOGD(TAG, "timer tick %d", timer_tick);
 	if (!timer_tick_notify_state) {
-		ESP_LOGD(TAG, "not notifying for timer tick");
+		if (connected) {
+			ESP_LOGD(TAG, "not notifying for timer tick");
+		}
 		return;
 	}
 	struct os_mbuf *om = ble_hs_mbuf_from_flat(&timer_tick, sizeof(timer_tick));
