@@ -76,9 +76,14 @@ git submodule status --recursive
 
 ### Set up the ESP32 environment
 
-1. [Follow these instructions to set up the ESP32 development environment.](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html)
-Make sure to install both the toolchain and the ESP-IDF framework,
-and set the `IDF_PATH` variable in your environment appropriately.
+1. [Follow these instructions to install the ESP32 toolchain.](https://docs.espressif.com/projects/esp-idf/en/stable/get-started/#setup-toolchain)
+
+1. Install the ESP-IDF framework with the  preview release of the NimBLE stack:
+```
+git clone -b feature/nimble-preview --recursive https://github.com/espressif/esp-idf.git
+```
+
+1. Set the `IDF_PATH` variable in your environment appropriately.
 
 1. Build and flash one of the example applications to make sure you have a working setup.
 
@@ -94,9 +99,10 @@ and set the `IDF_PATH` variable in your environment appropriately.
 
 ## Running GNARL
 
-Run the experimental [Medtronic branch of AndroidAPS](https://github.com/andyrozman/AndroidAPS)
+Run [Loop](https://loopkit.github.io/loopdocs/) on your iPhone
+or run the experimental [Medtronic branch of AndroidAPS](https://github.com/andyrozman/AndroidAPS)
 on your Android phone.
-In the setup wizard, GNARL should show up when you scan for a RileyLink.
+GNARL should show up when you scan for a RileyLink.
 
 GNARL will show messages on the OLED display when your phone
 connects and disconnects. Pushing the button will display the current
