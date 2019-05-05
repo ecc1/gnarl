@@ -1,10 +1,10 @@
-#include <stdint.h>
+#include "gnarl.h"
+
 #include <stdio.h>
 
 #include <esp_wifi.h>
 
 #include "display.h"
-#include "gnarl.h"
 #include "rfm95.h"
 
 #define PUMP_FREQUENCY 916600000
