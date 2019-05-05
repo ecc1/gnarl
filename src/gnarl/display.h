@@ -1,5 +1,6 @@
 typedef enum {
 	CONNECTED,
+	PHONE_RSSI,
 	PUMP_RSSI,
 	COMMAND_TIME,
 	SHOW_STATUS,

@@ -30,6 +30,7 @@ typedef enum {
 typedef struct {
 	rfspy_cmd_t command;
 	int length;
+	int rssi;
 	uint8_t data[MAX_PARAM_LEN + MAX_PACKET_LEN];
 } rfspy_request_t;
 
@@ -220,7 +221,7 @@ static void led_mode(const uint8_t *buf, int len) {
 	send_ack();
 }
 
-void rfspy_command(const uint8_t *buf, int count) {
+void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	if (count == 0) {
 		ESP_LOGE(TAG, "rfspy_command: count == 0");
 		return;
@@ -233,6 +234,7 @@ void rfspy_command(const uint8_t *buf, int count) {
 	rfspy_request_t req = {
 		.command = cmd,
 		.length = count - 2,
+		.rssi = rssi,
 	};
 	memcpy(req.data, buf + 2, req.length);
 	if (!xQueueSend(request_queue, &req, 0)) {
@@ -284,6 +286,7 @@ static void gnarl_loop() {
 			ESP_LOGE(TAG, "unimplemented rfspy command %d", req.command);
 			break;
 		}
+		display_update(PHONE_RSSI, req.rssi);
 		display_update(COMMAND_TIME, esp_timer_get_time()/SECONDS);
 	}
 }

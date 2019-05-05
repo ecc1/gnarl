@@ -22,6 +22,7 @@ typedef struct {
 static QueueHandle_t display_queue;
 
 static int connected = false;
+static int phone_rssi;
 static int pump_rssi;
 static int command_time;  // seconds
 
@@ -31,6 +32,10 @@ static void format_time_ago(char *buf) {
 	int now = esp_timer_get_time() / 1000000;
 	int delta = now - command_time;
 	int min = delta / 60;
+	if (min == 0) {
+		sprintf(buf, "%ds", delta);
+		return;
+	}
 	if (min < 60) {
 		sprintf(buf, "%dm", min);
 		return;
@@ -42,6 +47,10 @@ static void format_time_ago(char *buf) {
 
 static void update(display_command_t cmd) {
 	switch (cmd.op) {
+	case PHONE_RSSI:
+		phone_rssi = cmd.arg;
+		ESP_LOGD(TAG, "phone RSSI = %d", phone_rssi);
+		return;
 	case PUMP_RSSI:
 		pump_rssi = cmd.arg;
 		ESP_LOGD(TAG, "pump RSSI = %d", pump_rssi);
@@ -65,14 +74,23 @@ static void update(display_command_t cmd) {
 
 	oled_font_small();
 	oled_align_left();
-        oled_draw_string(5, 40, "Last command:");
-        oled_draw_string(5, 55, "Pump RSSI:");
+        oled_draw_string(5, 32, "Last command:");
+        oled_draw_string(5, 46, "Phone RSSI:");
+        oled_draw_string(5, 60, "Pump  RSSI:");
+
 	oled_align_right();
 	char buf[16];
 	format_time_ago(buf);
-        oled_draw_string(122, 40, buf);
-	sprintf(buf, "%d", pump_rssi);
-        oled_draw_string(122, 55, buf);
+	oled_draw_string(122, 32, buf);
+	if (connected) {
+		sprintf(buf, "%d", phone_rssi);
+		oled_draw_string(122, 46, buf);
+		sprintf(buf, "%d", pump_rssi);
+		oled_draw_string(122, 60, buf);
+	} else {
+		oled_draw_string(122, 46, "--");
+		oled_draw_string(122, 60, "--");
+	}
 
         oled_update();
 	usleep(DISPLAY_TIMEOUT*SECONDS);

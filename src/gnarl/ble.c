@@ -279,6 +279,7 @@ static void timer_tick_callback(void *arg) {
 
 static int data_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
 	int err;
+	int8_t rssi;
 	assert(ble_uuid_cmp(ctxt->chr->uuid, &data_uuid.u) == 0);
 	switch (ctxt->op) {
 	case BLE_GATT_ACCESS_OP_READ_CHR:
@@ -291,7 +292,8 @@ static int data_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_ga
 		err = ble_hs_mbuf_to_flat(ctxt->om, data_in, sizeof(data_in), &data_in_len);
 		assert(!err);
 		print_bytes("data_access: received %d bytes:", data_in, data_in_len);
-		rfspy_command(data_in, data_in_len);
+		ble_gap_conn_rssi(conn_handle, &rssi);
+		rfspy_command(data_in, data_in_len, (int)rssi);
 		return 0;
 	default:
 		assert(0);

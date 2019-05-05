@@ -16,6 +16,6 @@
 
 void gnarl_init(void);
 void start_gnarl_task(void);
-void rfspy_command(const uint8_t *buf, int count);
+void rfspy_command(const uint8_t *buf, int count, int rssi);
 void send_bytes(const uint8_t *buf, int count);
 void print_bytes(const char* msg, const uint8_t *buf, int count);
