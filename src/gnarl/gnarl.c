@@ -9,23 +9,22 @@
 #include <freertos/queue.h>
 #include <freertos/task.h>
 
+#include "4b6b.h"
+#include "commands.h"
 #include "display.h"
 #include "rfm95.h"
 
-#define MAX_PARAM_LEN	10
+#define MAX_PARAM_LEN	16
 #define MAX_PACKET_LEN	107
 
 typedef enum {
-	cmd_get_state	    = 0x01,
-	cmd_get_version	    = 0x02,
-	cmd_get_packet	    = 0x03,
-	cmd_send_packet	    = 0x04,
-	cmd_send_and_listen = 0x05,
-	cmd_update_register = 0x06,
-	cmd_reset	    = 0x07,
-	cmd_led		    = 0x08,
-	cmd_read_register   = 0x09,
-} rfspy_cmd_t;
+	ENCODING_NONE = 0,
+	ENCODING_4B6B = 2,
+} encoding_type_t;
+
+static encoding_type_t encoding_type = ENCODING_NONE;
+
+typedef enum CommandCode rfspy_cmd_t;
 
 typedef struct {
 	rfspy_cmd_t command;
@@ -38,35 +37,30 @@ typedef struct {
 
 static QueueHandle_t request_queue;
 
-typedef enum {
-	ERROR_RX_TIMEOUT      = 0xaa,
-	ERROR_CMD_INTERRUPTED = 0xbb,
-	ERROR_ZERO_DATA	      = 0xcc,
-} rfspy_result_t;
-
-typedef struct {
+typedef struct __attribute__((packed)) {
 	uint8_t listen_channel;
 	uint32_t timeout_ms;
 } get_packet_cmd_t;
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	uint8_t send_channel;
 	uint8_t repeat_count;
-	uint8_t delay_ms;
+	uint16_t delay_ms;
 	uint8_t packet[];
 } send_packet_cmd_t;
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	uint8_t send_channel;
 	uint8_t repeat_count;
-	uint8_t delay_ms;
+	uint16_t delay_ms;
 	uint8_t listen_channel;
 	uint32_t timeout_ms;
 	uint8_t retry_count;
+	uint16_t preamble_ms;
 	uint8_t packet[];
 } send_and_listen_cmd_t;
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	uint8_t rssi;
 	uint8_t packet_count;
 	uint8_t packet[MAX_PACKET_LEN];
@@ -80,25 +74,42 @@ static inline void swap_bytes(uint8_t *p, uint8_t *q) {
 	*q = t;
 }
 
+static inline void reverse_two_bytes(uint16_t *n) {
+	uint8_t *p = (uint8_t *)n;
+	swap_bytes(&p[0], &p[1]);
+}
+
 static inline void reverse_four_bytes(uint32_t *n) {
 	uint8_t *p = (uint8_t *)n;
 	swap_bytes(&p[0], &p[3]);
 	swap_bytes(&p[1], &p[2]);
 }
 
-static void send_packet(uint8_t *data, int len, int repeat_count, int delay_ms) {
-	print_bytes("send_packet: sending %d bytes:", data, len);
+// 71-byte long packet encodes to 107 bytes.
+static uint8_t pkt_buf[107];
+
+static void send(uint8_t *data, int len, int repeat_count, int delay_ms) {
+	if (len > 0 && data[len-1] == 0) {
+		len--;
+	}
+	switch (encoding_type) {
+	case ENCODING_NONE:
+		break;
+	case ENCODING_4B6B:
+		len = encode_4b6b(data, pkt_buf, len);
+		data = pkt_buf;
+		break;
+	default:
+		ESP_LOGE(TAG, "send: unknown encoding type %d", encoding_type);
+		break;
+	}
+	print_bytes("TX: sending %d bytes:", data, len);
 	transmit(data, len);
 	while (repeat_count > 0) {
 		usleep(delay_ms  *MILLISECONDS);
 		transmit(data, len);
 		repeat_count--;
 	}
-}
-
-static void send_ack() {
-	uint8_t ack = 1;
-	send_bytes(&ack, sizeof(ack));
 }
 
 // Transform an RSSI value back into the raw encoding that the TI CC111x radios use.
@@ -111,11 +122,9 @@ static uint8_t raw_rssi(int rssi) {
 static void rx_common(int n, int rssi) {
 	if (n == 0) {
 		ESP_LOGD(TAG, "RX: timeout");
-		uint8_t err = ERROR_RX_TIMEOUT;
-		send_bytes(&err, 1);
+		send_code(RESPONSE_CODE_RX_TIMEOUT);
 		return;
 	}
-	print_bytes("RX: received %d bytes:", rx_buf.packet, n);
 	rx_buf.rssi = raw_rssi(rssi);
 	if (rx_buf.rssi == 0) {
 		rx_buf.rssi = 1;
@@ -124,6 +133,22 @@ static void rx_common(int n, int rssi) {
 	if (rx_buf.packet_count == 0) {
 		rx_buf.packet_count = 1;
 	}
+	int d;
+	switch (encoding_type) {
+	case ENCODING_NONE:
+		break;
+	case ENCODING_4B6B:
+		d = decode_4b6b(rx_buf.packet, pkt_buf, n);
+		if (d != -1) {
+			memcpy(rx_buf.packet, pkt_buf, d);
+			n = d;
+		}
+		break;
+	default:
+		ESP_LOGE(TAG, "RX: unknown encoding type %d", encoding_type);
+		break;
+	}
+	print_bytes("RX: received %d bytes:", rx_buf.packet, n);
 	send_bytes((uint8_t *)&rx_buf, 2 + n);
 }
 
@@ -136,31 +161,34 @@ static void get_packet(const uint8_t *buf, int len) {
 	rx_common(n, read_rssi());
 }
 
-static void send(const uint8_t *buf, int len) {
+static void send_packet(const uint8_t *buf, int len) {
 	send_packet_cmd_t *p = (send_packet_cmd_t *)buf;
-	ESP_LOGD(TAG, "send: len %d send_channel %d repeat_count %d delay_ms %d",
+	reverse_two_bytes(&p->delay_ms);
+	ESP_LOGD(TAG, "send_packet: len %d send_channel %d repeat_count %d delay_ms %d",
 		 len, p->send_channel, p->repeat_count, p->delay_ms);
 	len -= (p->packet - (uint8_t *)p);
-	send_packet(p->packet, len, p->repeat_count, p->delay_ms);
-	send_ack();
+	send(p->packet, len, p->repeat_count, p->delay_ms);
+	send_code(RESPONSE_CODE_SUCCESS);
 }
 
 static void send_and_listen(const uint8_t *buf, int len) {
 	send_and_listen_cmd_t *p = (send_and_listen_cmd_t *)buf;
+	reverse_two_bytes(&p->delay_ms);
 	reverse_four_bytes(&p->timeout_ms);
+	reverse_two_bytes(&p->preamble_ms);
 	ESP_LOGD(TAG, "send_and_listen: len %d send_channel %d repeat_count %d delay_ms %d",
 		 len, p->send_channel, p->repeat_count, p->delay_ms);
 	ESP_LOGD(TAG, "send_and_listen: listen_channel %d timeout_ms %d retry_count %d",
 		 p->listen_channel, p->timeout_ms, p->retry_count);
 	len -= (p->packet - (uint8_t *)p);
-	send_packet(p->packet, len, p->repeat_count, p->delay_ms);
+	send(p->packet, len, p->repeat_count, p->delay_ms);
 	int n = receive(rx_buf.packet, sizeof(rx_buf.packet), p->timeout_ms);
 	int rssi = read_rssi();
 	for (int retries = p->retry_count; retries > 0; retries--) {
 		if (n != 0) {
 			break;
 		}
-		send_packet(p->packet, len, p->repeat_count, p->delay_ms);
+		send(p->packet, len, p->repeat_count, p->delay_ms);
 		n = receive(rx_buf.packet, sizeof(rx_buf.packet), p->timeout_ms);
 		rssi = read_rssi();
 	}
@@ -184,7 +212,7 @@ static void check_frequency() {
 	uint32_t f = ((uint32_t)fr[0] << 16) + ((uint32_t)fr[1] << 8) + ((uint32_t)fr[2]);
 	uint32_t freq = (uint32_t)(((uint64_t)f * 24*MHz) >> 16);
 	if (valid_frequency(freq)) {
-		ESP_LOGD(TAG, "setting frequency to %d Hz", freq);
+		ESP_LOGI(TAG, "setting frequency to %d Hz", freq);
 		set_frequency(freq);
 	} else {
 		ESP_LOGD(TAG, "invalid frequency (%d Hz)", freq);
@@ -209,7 +237,7 @@ static void update_register(const uint8_t *buf, int len) {
 		ESP_LOGD(TAG, "update_register: addr %02X ignored", addr);
 		break;
 	}
-	send_ack();
+	send_code(RESPONSE_CODE_SUCCESS);
 }
 
 static void led_mode(const uint8_t *buf, int len) {
@@ -218,7 +246,21 @@ static void led_mode(const uint8_t *buf, int len) {
 		return;
 	}
 	ESP_LOGD(TAG, "led_mode: led %02X mode %02X", buf[0], buf[1]);
-	send_ack();
+	send_code(RESPONSE_CODE_SUCCESS);
+}
+
+static void set_sw_encoding(const uint8_t *buf, int len) {
+	ESP_LOGD(TAG, "encoding mode %02X", buf[0]);
+	switch (buf[0]) {
+	case ENCODING_NONE:
+	case ENCODING_4B6B:
+		encoding_type = buf[0];
+		break;
+	default:
+		send_code(RESPONSE_CODE_PARAM_ERROR);
+		return;
+	}
+	send_code(RESPONSE_CODE_SUCCESS);
 }
 
 void rfspy_command(const uint8_t *buf, int count, int rssi) {
@@ -231,6 +273,12 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 		return;
 	}
 	rfspy_cmd_t cmd = buf[1];
+	// Special case: handle register upates immediately so they don't fill up the queue.
+	if (cmd == CmdUpdateRegister) {
+		ESP_LOGI(TAG, "CmdUpdateRegister");
+		update_register(buf + 2, count - 2);
+		return;
+	}
 	rfspy_request_t req = {
 		.command = cmd,
 		.length = count - 2,
@@ -253,34 +301,42 @@ static void gnarl_loop() {
 			continue;
 		}
 		switch (req.command) {
-		case cmd_get_state:
-			ESP_LOGI(TAG, "cmd_get_state");
+		case CmdGetState:
+			ESP_LOGI(TAG, "CmdGetState");
 			send_bytes((const uint8_t *)STATE_OK, strlen(STATE_OK));
 			break;
-		case cmd_get_version:
-			ESP_LOGI(TAG, "cmd_get_version");
+		case CmdGetVersion:
+			ESP_LOGI(TAG, "CmdGetVersion");
 			send_bytes((const uint8_t *)SUBG_RFSPY_VERSION, strlen(SUBG_RFSPY_VERSION));
 			break;
-		case cmd_get_packet:
-			ESP_LOGI(TAG, "cmd_get_packet");
+		case CmdGetPacket:
+			ESP_LOGI(TAG, "CmdGetPacket");
 			get_packet(req.data, req.length);
 			break;
-		case cmd_send_packet:
-			ESP_LOGI(TAG, "cmd_send_packet");
-			send(req.data, req.length);
+		case CmdSendPacket:
+			ESP_LOGI(TAG, "CmdSendPacket");
+			send_packet(req.data, req.length);
 			break;
-		case cmd_send_and_listen:
-			ESP_LOGI(TAG, "cmd_send_and_listen");
+		case CmdSendAndListen:
+			ESP_LOGI(TAG, "CmdSendAndListen");
 			send_and_listen(req.data, req.length);
 			display_update(PUMP_RSSI, read_rssi());
 			break;
-		case cmd_update_register:
-			ESP_LOGI(TAG, "cmd_update_register");
+		case CmdUpdateRegister:
+			ESP_LOGI(TAG, "CmdUpdateRegister");
 			update_register(req.data, req.length);
 			break;
-		case cmd_led:
-			ESP_LOGI(TAG, "cmd_led");
+		case CmdLED:
+			ESP_LOGI(TAG, "CmdLED");
 			led_mode(req.data, req.length);
+			break;
+		case CmdSetSWEncoding:
+			ESP_LOGI(TAG, "CmdSetSWEncoding");
+			set_sw_encoding(req.data, req.length);
+			break;
+		case CmdResetRadioConfig:
+			ESP_LOGI(TAG, "CmdResetRadioConfig");
+			send_code(RESPONSE_CODE_SUCCESS);
 			break;
 		default:
 			ESP_LOGE(TAG, "unimplemented rfspy command %d", req.command);

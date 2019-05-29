@@ -12,6 +12,7 @@
 #include <services/gap/ble_svc_gap.h>
 #include <services/gatt/ble_svc_gatt.h>
 
+#include "commands.h"
 #include "display.h"
 
 #define MAX_DATA	150
@@ -235,11 +236,7 @@ static uint16_t data_in_len;
 static uint8_t data_out[MAX_DATA];
 static uint16_t data_out_len;
 
-void send_bytes(const uint8_t *buf, int count) {
-	print_bytes("send_bytes (%d):", buf, count);
-	memcpy(data_out, buf, count);
-	data_out[count++] = 0; // Terminate with 0 for Loop
-	data_out_len = count;
+static void response_notify() {
 	response_count++;
 	if (!response_count_notify_state) {
 		ESP_LOGD(TAG, "not notifying for response count %d", response_count);
@@ -249,6 +246,21 @@ void send_bytes(const uint8_t *buf, int count) {
 	int err = ble_gattc_notify_custom(connection_handle, response_count_notify_handle, om);
 	assert(!err);
 	ESP_LOGD(TAG, "notify for response count %d", response_count);
+}
+
+void send_code(const uint8_t code) {
+	ESP_LOGD(TAG, "send_code %02X", code);
+	data_out[0] = code;
+	data_out_len = 1;
+	response_notify();
+}
+
+void send_bytes(const uint8_t *buf, int count) {
+	print_bytes("send_bytes (%d):", buf, count);
+	data_out[0] = RESPONSE_CODE_SUCCESS;
+	memcpy(data_out + 1, buf, count);
+	data_out_len = count + 1;
+	response_notify();
 }
 
 void print_bytes(const char *msg, const uint8_t *buf, int count) {
