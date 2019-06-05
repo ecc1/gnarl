@@ -12,6 +12,7 @@
 #define CMD_ACK		0x06
 #define CMD_NAK		0x15
 #define CMD_WAKEUP	0x5D
+#define CMD_CLOCK	0x70
 #define CMD_BATTERY	0x72
 #define CMD_RESERVOIR	0x73
 #define CMD_MODEL	0x8D
@@ -168,28 +169,17 @@ static uint8_t *short_command(uint8_t cmd, int *len) {
 	return data;
 }
 
-static int cached_pump_family;
-
-int pump_model() {
-	int n;
-	uint8_t *data = short_command(CMD_MODEL, &n);
-	if (!data || n < 2) {
-		return -1;
-	}
-	int k = data[1];
-	if (n < 2 + k) {
-		return -1;
-	}
-	int model = 0;
-	for (int i = 2; i < 2 + k; i++) {
-		model = 10*model + data[i] - '0';
-	}
-	cached_pump_family = model % 100;
-	return model;
-}
-
 static inline int two_byte_int(uint8_t *p) {
 	return (p[0] << 8) | p[1];
+}
+
+static int cached_pump_family;
+
+int pump_family() {
+	if (cached_pump_family == 0) {
+		pump_model();
+	}
+	return cached_pump_family;
 }
 
 int pump_wakeup() {
@@ -204,11 +194,19 @@ int pump_wakeup() {
 	return data != 0;
 }
 
-int pump_family() {
-	if (cached_pump_family == 0) {
-		pump_model();
+int pump_clock(struct tm *tm) {
+	int n;
+	uint8_t *data = short_command(CMD_CLOCK, &n);
+	if (!data || n < 8 || data[0] != 7) {
+		return -1;
 	}
-	return cached_pump_family;
+	tm->tm_hour = data[1];
+	tm->tm_min = data[2];
+	tm->tm_sec = data[3];
+	tm->tm_year = two_byte_int(&data[4]) - 1900;
+	tm->tm_mon = data[6] - 1;
+	tm->tm_mday = data[7];
+	return 0;
 }
 
 int pump_battery() {
@@ -237,6 +235,24 @@ int pump_reservoir() {
 		return -1;
 	}
 	return two_byte_int(&data[3]) * 25;
+}
+
+int pump_model() {
+	int n;
+	uint8_t *data = short_command(CMD_MODEL, &n);
+	if (!data || n < 2) {
+		return -1;
+	}
+	int k = data[1];
+	if (n < 2 + k) {
+		return -1;
+	}
+	int model = 0;
+	for (int i = 2; i < 2 + k; i++) {
+		model = 10*model + data[i] - '0';
+	}
+	cached_pump_family = model % 100;
+	return model;
 }
 
 int pump_temp_basal(int *minutes) {
