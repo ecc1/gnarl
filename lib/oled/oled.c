@@ -3,10 +3,61 @@
 static u8g2_t u8g2;
 
 static enum {
-	LEFT,
-	RIGHT,
-	CENTER,
-} align_mode = LEFT;
+	SANS_SERIF,
+	SERIF,
+	MONOSPACE,
+} font_style = SANS_SERIF;
+#define NUM_STYLES	(MONOSPACE + 1)
+
+void oled_font_sans_serif() {
+	font_style = SANS_SERIF;
+}
+
+void oled_font_serif() {
+	font_style = SERIF;
+}
+
+void oled_font_monospace() {
+	font_style = MONOSPACE;
+}
+
+static enum {
+	SMALL,
+	MEDIUM,
+	LARGE,
+} font_size = MEDIUM;
+#define NUM_SIZES	(LARGE + 1)
+
+void oled_font_small() {
+	font_size = SMALL;
+}
+
+void oled_font_medium() {
+	font_size = MEDIUM;
+}
+
+void oled_font_large() {
+	font_size = LARGE;
+}
+
+static const uint8_t *font[NUM_STYLES][NUM_SIZES] = {
+	// sans-serif
+	{ u8g2_font_helvR08_tr,
+	  u8g2_font_helvR12_tr,
+	  u8g2_font_helvR24_tr },
+	// serif
+	{ u8g2_font_timR08_tr,
+	  u8g2_font_timR12_tr,
+	  u8g2_font_timR24_tr },
+	// monospace
+	{ u8g2_font_courR08_tr,
+	  u8g2_font_courR12_tr,
+	  u8g2_font_courR24_tr },
+};
+
+static void set_font() {
+	u8g2_SetFont(&u8g2, font[font_style][font_size]);
+}
 
 void oled_on() {
 	u8g2_SetPowerSave(&u8g2, 0);
@@ -25,28 +76,25 @@ void oled_update() {
 }
 
 int oled_font_width() {
+	set_font();
 	return u8g2_GetMaxCharWidth(&u8g2);
 }
 
 int oled_font_ascent() {
+	set_font();
 	return u8g2_GetAscent(&u8g2);
 }
 
 int oled_font_descent() {
+	set_font();
 	return -u8g2_GetDescent(&u8g2);
 }
 
-void oled_font_small() {
-	u8g2_SetFont(&u8g2, u8g2_font_helvR08_tr);
-}
-
-void oled_font_medium() {
-	u8g2_SetFont(&u8g2, u8g2_font_helvR12_tr);
-}
-
-void oled_font_large() {
-	u8g2_SetFont(&u8g2, u8g2_font_helvR24_tr);
-}
+static enum {
+	LEFT,
+	RIGHT,
+	CENTER,
+} align_mode = LEFT;
 
 void oled_align_left() {
 	align_mode = LEFT;
@@ -61,10 +109,12 @@ void oled_align_center() {
 }
 
 int oled_string_width(const char *s) {
+	set_font();
 	return u8g2_GetStrWidth(&u8g2, s);
 }
 
 void oled_draw_string(int x, int y, const char *s) {
+	set_font();
 	if (align_mode != LEFT) {
 		int w = u8g2_GetStrWidth(&u8g2, s);
 		if (align_mode == CENTER) {

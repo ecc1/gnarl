@@ -17,6 +17,10 @@ extern void oled_font_small();
 extern void oled_font_medium();
 extern void oled_font_large();
 
+extern void oled_font_sans_serif();
+extern void oled_font_serif();
+extern void oled_font_monospace();
+
 extern void oled_align_left();
 extern void oled_align_right();
 extern void oled_align_center();
