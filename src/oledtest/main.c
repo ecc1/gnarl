@@ -55,19 +55,38 @@ void draw_text(const char *s) {
 	}
 }
 
-void display(void (*fontsize)(void)) {
+typedef void (*void_fn_t)(void);
+
+void_fn_t font_size[] = {
+	oled_font_small,
+	oled_font_medium,
+	oled_font_large,
+};
+#define NUM_SIZES	(sizeof(font_size)/sizeof(font_size[0]))
+
+void_fn_t font_style[] = {
+	oled_font_sans_serif,
+	oled_font_serif,
+	oled_font_monospace,
+};
+#define NUM_STYLES	(sizeof(font_style)/sizeof(font_style[0]))
+
+void display() {
 	oled_clear();
-	fontsize();
 	draw_text(lorem_ipsum);
 	oled_update();
-	sleep(5);
+	sleep(2);
 }
 
 void app_main() {
 	oled_init();
 	for (;;) {
-		display(oled_font_small);
-		display(oled_font_medium);
-		display(oled_font_large);
+		for (int i = 0; i < NUM_SIZES; i++) {
+			font_size[i]();
+			for (int j = 0; j < NUM_STYLES; j++) {
+				font_style[j]();
+				display();
+			}
+		}
 	}
 }
