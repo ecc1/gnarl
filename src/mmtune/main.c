@@ -57,7 +57,7 @@ void app_main() {
 	oled_init();
 	splash();
 	usleep(2 * SECONDS);
-	parse_pump_id(PUMP_ID);
+	pump_set_id(PUMP_ID);
 
 	oled_clear();
 	oled_font_medium();

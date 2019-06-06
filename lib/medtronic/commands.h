@@ -1,6 +1,6 @@
 #include <time.h>
 
-void parse_pump_id(const char *id);
+void pump_set_id(const char *id);
 
 int pump_battery(void);
 int pump_clock(struct tm *tm);

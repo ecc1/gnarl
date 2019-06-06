@@ -33,7 +33,7 @@ static const char *err_messages[] = {
 
 static uint8_t pump_id[3];
 
-void parse_pump_id(const char *id) {
+void pump_set_id(const char *id) {
 	uint32_t n = 0;
 	int i = 0;
 	for (;;) {

@@ -54,7 +54,7 @@ void splash() {
 void app_main() {
 	oled_init();
 	splash();
-	parse_pump_id(PUMP_ID);
+	pump_set_id(PUMP_ID);
 	rfm95_init();
 	set_frequency(PUMP_FREQUENCY);
 	printf("frequency set to %d Hz\n", read_frequency());
