@@ -2,7 +2,7 @@
 
 #include <esp_sleep.h>
 
-#include "commands.h"
+#include "medtronic.h"
 #include "module.h"
 #include "oled.h"
 #include "pump.h"
@@ -13,7 +13,7 @@ int reservoir_level;
 int battery_level;
 int model;
 
-void get_radio_info() {
+void get_pump_info() {
 	printf("waking pump %s\n", PUMP_ID);
 	if (!pump_wakeup()) {
 		printf("wakeup failed\n");
@@ -65,7 +65,7 @@ void app_main() {
 	rfm95_init();
 	set_frequency(PUMP_FREQUENCY);
 	printf("frequency set to %d Hz\n", read_frequency());
-	get_radio_info();
+	get_pump_info();
 	display_info();
 	usleep(DISPLAY_TIMEOUT);
 	// Wake up on button press.

@@ -3,7 +3,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "commands.h"
+#include "medtronic.h"
 #include "module.h"
 #include "oled.h"
 #include "pump.h"
