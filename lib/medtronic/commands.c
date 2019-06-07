@@ -2,34 +2,54 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "medtronic.h"
 #include "4b6b.h"
 #include "commands.h"
 #include "crc.h"
 #include "rfm95.h"
 
-#define CARELINK_DEVICE	0xA7
+#define CARELINK_DEVICE		0xA7
 
-#define CMD_ACK		0x06
-#define CMD_NAK		0x15
-#define CMD_WAKEUP	0x5D
-#define CMD_CLOCK	0x70
-#define CMD_BATTERY	0x72
-#define CMD_RESERVOIR	0x73
-#define CMD_MODEL	0x8D
-#define CMD_TEMP_BASAL	0x98
+#define PAYLOAD_LENGTH		64
+#define FRAGMENT_LENGTH		(PAYLOAD_LENGTH + 1) // seq# + payload
+#define DONE_BIT		(1 << 7)
 
 #define NO_RESPONSE		-1
 #define DECODING_FAILURE	-2
 #define CRC_FAILURE		-3
 #define INVALID_RESPONSE	-4
 
-static const char *err_messages[] = {
-	"???",
-	"no response",
-	"decoding failure",
-	"CRC failure",
-	"invalid response",
-};
+static void log_error(command_t cmd, int n) {
+	const char *msg;
+	switch (n) {
+	case NO_RESPONSE:
+		return;
+	case DECODING_FAILURE:
+		msg = "decoding failure";
+		break;
+	case CRC_FAILURE:
+		msg = "CRC failure";
+		break;
+	case INVALID_RESPONSE:
+		msg = "invalid response";
+		break;
+	default:
+		ESP_LOGE(TAG, "command %02X: error %d", cmd, n);
+		return;
+	}
+	ESP_LOGE(TAG, "command %02X: %s", cmd, msg);
+}
+
+void print_bytes(const char *msg, const uint8_t *buf, int count) {
+	if (LOG_LOCAL_LEVEL < ESP_LOG_DEBUG) {
+		return;
+	}
+	printf(msg, count);
+	for (int i = 0; i < count; i++) {
+		printf(" %02X", buf[i]);
+	}
+	printf("\n");
+}
 
 static uint8_t pump_id[3];
 
@@ -78,8 +98,6 @@ typedef struct {
 	uint8_t crc;
 } long_packet_t;
 
-//static long_packet_t long_Packet;
-
 // 71-byte long packet encodes to 107 bytes.
 static uint8_t long_buf[107];
 
@@ -89,7 +107,7 @@ static void encode_pump_id(uint8_t *dst) {
 	dst[2] = pump_id[2];
 }
 
-static void encode_short_packet(uint8_t cmd) {
+static void encode_short_packet(command_t cmd) {
 	short_packet.device_type = CARELINK_DEVICE;
 	encode_pump_id(short_packet.pump_id);
 	short_packet.command = cmd;
@@ -101,7 +119,7 @@ static void encode_short_packet(uint8_t cmd) {
 
 static uint8_t rx_buf[150], response_buf[100];
 
-static int valid_response(uint8_t cmd, uint8_t resp, int n) {
+static int valid_response(command_t cmd, command_t resp, int n) {
 	if (n < 6) {
 		return 0;
 	}
@@ -112,13 +130,10 @@ static int valid_response(uint8_t cmd, uint8_t resp, int n) {
 	if (memcmp(p->pump_id, pump_id, sizeof(pump_id)) != 0) {
 		return 0;
 	}
-	if (p->command == cmd || p->command == resp) {
-		return 1;
-	}
-	return 0;
+	return p->command == cmd || p->command == resp;
 }
 
-static uint8_t *perform(uint8_t cmd, uint8_t *pkt, int pkt_len, int tries, int rx_timeout, uint8_t exp_resp, int *result_len) {
+static uint8_t *perform(command_t cmd, uint8_t *pkt, int pkt_len, int tries, int rx_timeout, command_t exp_resp, int *result_len) {
 	if (pkt_len == sizeof(long_buf)) {
 		// Don't attempt state-changing commands more than once.
 		tries = 1;
@@ -145,6 +160,7 @@ static uint8_t *perform(uint8_t cmd, uint8_t *pkt, int pkt_len, int tries, int r
 		*result_len = CRC_FAILURE;
 		return 0;
 	}
+	n--; // discard CRC byte
 	if (!valid_response(cmd, exp_resp, n)) {
 		*result_len = INVALID_RESPONSE;
 		return 0;
@@ -156,30 +172,59 @@ static uint8_t *perform(uint8_t cmd, uint8_t *pkt, int pkt_len, int tries, int r
 #define DEFAULT_TRIES 3
 #define DEFAULT_TIMEOUT 500 // milliseconds
 
-static uint8_t *short_command(uint8_t cmd, int *len) {
+uint8_t *short_command(command_t cmd, int *len) {
 	encode_short_packet(cmd);
 	uint8_t *data = perform(cmd, short_buf, sizeof(short_buf), DEFAULT_TRIES, DEFAULT_TIMEOUT, cmd, len);
 	int n = *len;
 	if (n < 0) {
-		if (n != NO_RESPONSE) {
-			printf("%s\n", err_messages[-n]);
-		}
+		log_error(cmd, n);
 		return 0;
 	}
 	return data;
 }
 
-static inline int two_byte_int(uint8_t *p) {
-	return (p[0] << 8) | p[1];
+static uint8_t *acknowledge(command_t cmd, int *len) {
+	encode_short_packet(CMD_ACK);
+	uint8_t *data = perform(CMD_ACK, short_buf, sizeof(short_buf), 1, DEFAULT_TIMEOUT, cmd, len);
+	int n = *len;
+	if (n < 0) {
+		log_error(cmd, n);
+		return 0;
+	}
+	return data;
 }
 
-static int cached_pump_family;
+static uint8_t page_buf[1024];
 
-int pump_family() {
-	if (cached_pump_family == 0) {
-		pump_model();
+uint8_t *extended_response(command_t cmd, int *len) {
+	int n;
+	int expected = 1;
+	uint8_t *p = page_buf;
+	uint8_t *data = short_command(cmd, &n);
+	while (n == FRAGMENT_LENGTH) {
+		uint8_t seq_num = data[0] & ~DONE_BIT;
+		if (seq_num != expected) {
+			ESP_LOGD(TAG, "command %02X: received fragment %d instead of %d", cmd, seq_num, expected);
+			break;
+		}
+		memcpy(p, data + 1, PAYLOAD_LENGTH);
+		p += PAYLOAD_LENGTH;
+		if (data[0] & DONE_BIT) {
+			*len = seq_num * PAYLOAD_LENGTH;
+			return page_buf;
+		}
+		// Acknowledge this fragment and receive the next.
+		data = acknowledge(cmd, &n);
+		expected++;
 	}
-	return cached_pump_family;
+	if (n < 0) {
+		log_error(cmd, n);
+	} else {
+		ESP_LOGD(TAG, "command %02X: received %d-byte response", cmd, n);
+		print_bytes("response", data, n);
+	}
+	*len = -1;
+	return 0;
 }
 
 int pump_wakeup() {
@@ -192,79 +237,4 @@ int pump_wakeup() {
 	perform(CMD_WAKEUP, short_buf, sizeof(short_buf), 100, 10, CMD_ACK, &n);
 	uint8_t *data = perform(CMD_WAKEUP, short_buf, sizeof(short_buf), 1, 10000, CMD_ACK, &n);
 	return data != 0;
-}
-
-int pump_clock(struct tm *tm) {
-	int n;
-	uint8_t *data = short_command(CMD_CLOCK, &n);
-	if (!data || n < 8 || data[0] != 7) {
-		return -1;
-	}
-	tm->tm_hour = data[1];
-	tm->tm_min = data[2];
-	tm->tm_sec = data[3];
-	tm->tm_year = two_byte_int(&data[4]) - 1900;
-	tm->tm_mon = data[6] - 1;
-	tm->tm_mday = data[7];
-	return 0;
-}
-
-int pump_battery() {
-	int n;
-	uint8_t *data = short_command(CMD_BATTERY, &n);
-	if (!data || n < 4 || data[0] != 3) {
-		return -1;
-	}
-	return two_byte_int(&data[2]) * 10;
-}
-
-int pump_reservoir() {
-	int n;
-	uint8_t *data = short_command(CMD_RESERVOIR, &n);
-	if (!data) {
-		return -1;
-	}
-	int fam = pump_family();
-	if (fam <= 22) {
-		if (n < 3 || data[0] != 2) {
-			return -1;
-		}
-		return two_byte_int(&data[1]) * 100;
-	}
-	if (n < 5 || data[0] != 4) {
-		return -1;
-	}
-	return two_byte_int(&data[3]) * 25;
-}
-
-int pump_model() {
-	int n;
-	uint8_t *data = short_command(CMD_MODEL, &n);
-	if (!data || n < 2) {
-		return -1;
-	}
-	int k = data[1];
-	if (n < 2 + k) {
-		return -1;
-	}
-	int model = 0;
-	for (int i = 2; i < 2 + k; i++) {
-		model = 10*model + data[i] - '0';
-	}
-	cached_pump_family = model % 100;
-	return model;
-}
-
-int pump_temp_basal(int *minutes) {
-	int n;
-	uint8_t *data = short_command(CMD_TEMP_BASAL, &n);
-	if (!data || n < 7 || data[0] != 6) {
-		return -1;
-	}
-	*minutes = two_byte_int(&data[5]);
-	if (data[1] != 0) {
-		printf("unsupported %d percent temp basal\n", data[2]);
-		return 0;
-	}
-	return two_byte_int(&data[3]) * 25;
 }
