@@ -9,6 +9,7 @@ typedef enum {
 	CMD_CLOCK	  = 0x70,
 	CMD_BATTERY	  = 0x72,
 	CMD_RESERVOIR	  = 0x73,
+	CMD_HISTORY	  = 0x80,
 	CMD_CARB_UNITS	  = 0x88,
 	CMD_GLUCOSE_UNITS = 0x89,
 	CMD_CARB_RATIOS   = 0x8A,
@@ -24,5 +25,17 @@ typedef enum {
 } command_t;
 
 void print_bytes(const char *msg, const uint8_t *buf, int count);
+
 uint8_t *short_command(command_t cmd, int *len);
+
 uint8_t *extended_response(command_t cmd, int *len);
+
+uint8_t *download_page(command_t cmd, int page_num, int *len);
+
+static inline int two_byte_be_int(uint8_t *p) {
+	return (p[0] << 8) | p[1];
+}
+
+static inline int two_byte_le_int(uint8_t *p) {
+	return (p[1] << 8) | p[0];
+}

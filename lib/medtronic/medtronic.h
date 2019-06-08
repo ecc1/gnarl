@@ -1,5 +1,7 @@
 #include <time.h>
 
+#define HISTORY_PAGE_SIZE	1022
+
 #define PACKED	__attribute__((packed))
 
 typedef enum PACKED {
@@ -70,6 +72,7 @@ carb_units_t pump_carb_units(void);
 int pump_clock(struct tm *tm);
 int pump_family(void);
 glucose_units_t pump_glucose_units(void);
+uint8_t *pump_history_page(int page_num);
 int pump_model(void);
 int pump_reservoir(void);
 int pump_sensitivities(sensitivity_t *r, int max);

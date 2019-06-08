@@ -4,14 +4,6 @@
 #include "medtronic.h"
 #include "commands.h"
 
-static inline int two_byte_int(uint8_t *p) {
-	return (p[0] << 8) | p[1];
-}
-
-static inline int two_byte_le_int(uint8_t *p) {
-	return (p[1] << 8) | p[0];
-}
-
 static inline insulin_t int_to_insulin(int n, int fam) {
 	if (fam <= 22) {
 		return 100 * n;
@@ -64,7 +56,7 @@ int pump_battery() {
 	if (!data || n < 4 || data[0] != 3) {
 		return -1;
 	}
-	return two_byte_int(&data[2]) * 10;
+	return two_byte_be_int(&data[2]) * 10;
 }
 
 int pump_carb_ratios(carb_ratio_t *r, int max) {
@@ -110,7 +102,7 @@ int pump_carb_ratios(carb_ratio_t *r, int max) {
 				return 0;
 			}
 		} else {
-			r->ratio = two_byte_int(&data[i + 1]);
+			r->ratio = two_byte_be_int(&data[i + 1]);
 		}
 	}
 	return count;
@@ -134,7 +126,7 @@ int pump_clock(struct tm *tm) {
 	tm->tm_hour = data[1];
 	tm->tm_min = data[2];
 	tm->tm_sec = data[3];
-	tm->tm_year = two_byte_int(&data[4]) - 1900;
+	tm->tm_year = two_byte_be_int(&data[4]) - 1900;
 	tm->tm_mon = data[6] - 1;
 	tm->tm_mday = data[7];
 	return 0;
@@ -147,6 +139,16 @@ glucose_units_t pump_glucose_units() {
 		return -1;
 	}
 	return data[1];
+}
+
+uint8_t *pump_history_page(int page_num) {
+	int n;
+	uint8_t *data = download_page(CMD_HISTORY, page_num, &n);
+	if (data == 0 || n != HISTORY_PAGE_SIZE) {
+		ESP_LOGE(TAG, "pump_history_page: data %p length %d", data, n);
+		return 0;
+	}
+	return data;
 }
 
 int pump_model() {
@@ -179,12 +181,12 @@ int pump_reservoir() {
 		if (n < 3 || data[0] != 2) {
 			return -1;
 		}
-		return two_byte_int(&data[1]) * 100;
+		return two_byte_be_int(&data[1]) * 100;
 	}
 	if (n < 5 || data[0] != 4) {
 		return -1;
 	}
-	return two_byte_int(&data[3]) * 25;
+	return two_byte_be_int(&data[3]) * 25;
 }
 
 int pump_sensitivities(sensitivity_t *r, int max) {
@@ -231,7 +233,7 @@ int pump_settings(settings_t *r) {
 			return -1;
 		}
 		r->max_bolus = int_to_insulin(data[6], 22);
-		r->max_basal = int_to_insulin(two_byte_int(&data[7]), 23);
+		r->max_basal = int_to_insulin(two_byte_be_int(&data[7]), 23);
 		// Response indicates only regular or fast-acting.
 		r->dia = data[18] ? 8 : 6;
 	} else if (fam <= 22) {
@@ -239,14 +241,14 @@ int pump_settings(settings_t *r) {
 			return -1;
 		}
 		r->max_bolus = int_to_insulin(data[6], 22);
-		r->max_basal = int_to_insulin(two_byte_int(&data[7]), 23);
+		r->max_basal = int_to_insulin(two_byte_be_int(&data[7]), 23);
 		r->dia = data[18];
 	} else {
 		if (!data || n < 26 || data[0] != 25) {
 			return -1;
 		}
 		r->max_bolus = int_to_insulin(data[7], 22);
-		r->max_basal = int_to_insulin(two_byte_int(&data[8]), 23);
+		r->max_basal = int_to_insulin(two_byte_be_int(&data[8]), 23);
 		r->dia = data[18];
 	}
 	r->temp_basal_type = data[14];
@@ -307,10 +309,10 @@ int pump_temp_basal(int *minutes) {
 	if (!data || n < 7 || data[0] != 6) {
 		return -1;
 	}
-	*minutes = two_byte_int(&data[5]);
+	*minutes = two_byte_be_int(&data[5]);
 	if (data[1] != 0) {
 		ESP_LOGE(TAG, "pump_temp_basal: unsupported %d percent rate", data[2]);
 		return 0;
 	}
-	return two_byte_int(&data[3]) * 25;
+	return two_byte_be_int(&data[3]) * 25;
 }
