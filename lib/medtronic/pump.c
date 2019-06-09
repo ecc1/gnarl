@@ -4,13 +4,6 @@
 #include "medtronic.h"
 #include "commands.h"
 
-static inline insulin_t int_to_insulin(int n, int fam) {
-	if (fam <= 22) {
-		return 100 * n;
-	}
-	return 25 * n;
-}
-
 static inline glucose_t int_to_glucose(int n, glucose_units_t units) {
 	switch (units) {
 	case MG_PER_DL:

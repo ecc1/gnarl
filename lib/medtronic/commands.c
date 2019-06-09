@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "medtronic.h"
@@ -42,17 +41,6 @@ static void log_error(command_t cmd, int n) {
 		return;
 	}
 	ESP_LOGE(TAG, "command %02X: %s", cmd, msg);
-}
-
-void print_bytes(const char *msg, const uint8_t *buf, int count) {
-	if (LOG_LOCAL_LEVEL < ESP_LOG_DEBUG) {
-		return;
-	}
-	printf(msg, count);
-	for (int i = 0; i < count; i++) {
-		printf(" %02X", buf[i]);
-	}
-	printf("\n");
 }
 
 static uint8_t pump_id[3];

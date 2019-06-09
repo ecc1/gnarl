@@ -24,8 +24,6 @@ typedef enum {
 	CMD_STATUS	  = 0xCE,
 } command_t;
 
-void print_bytes(const char *msg, const uint8_t *buf, int count);
-
 uint8_t *short_command(command_t cmd, int *len);
 
 uint8_t *extended_response(command_t cmd, int *len);
@@ -39,3 +37,12 @@ static inline int two_byte_be_int(uint8_t *p) {
 static inline int two_byte_le_int(uint8_t *p) {
 	return (p[1] << 8) | p[0];
 }
+
+static inline insulin_t int_to_insulin(int n, int fam) {
+	if (fam <= 22) {
+		return 100 * n;
+	}
+	return 25 * n;
+}
+
+void print_bytes(const char *msg, const uint8_t *data, int len);
