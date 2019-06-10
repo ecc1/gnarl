@@ -1,64 +1,58 @@
-#include <ctype.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "testing.h"
 
-#include "medtronic.h"
-#include "pump_history.h"
+char *test_dir = "./testdata";
 
-int family = 22;
+char *test_files[] = {
+	"model-512-1",
+	"model-512-2",
+	"model-515",
+	"model-522",
+	"model-523-1",
+	"model-523-2",
+	"ps2-522-1",
+	"ps2-522-2",
+	"ps2-523-1",
+	"ps2-523-2",
+	"ps2-523-3",
+	"ps2-523-4",
+	"ps2-523-5",
+	"ps2-523-6",
+	"ps2-551-1",
+	"ps2-551-2",
+	"ps2-551-3",
+	"ps2-551-4",
+	"ps2-554-1",
+	"ps2-554-2",
+	"ps2-554-3",
+	"ps2-554-4",
+	"ps2-554-5",
+};
+#define NUM_TEST_FILES	(sizeof(test_files)/sizeof(test_files[0]))
 
-#define MAX_HISTORY	150
-history_record_t history[MAX_HISTORY];
-
-uint8_t page[HISTORY_PAGE_SIZE + 2];
-
-int read_bytes(const char *filename) {
-	FILE *f = fopen(filename, "r");
-	if (f == 0) {
-		perror(filename);
-		exit(1);
+char *get_test_file(char *name, int *familyp) {
+	static char buf[50];
+	strcpy(buf, strchr(name, '-') + 1);
+	char *t = strchr(buf, '-');
+	if (t != 0) {
+		*t = 0;
 	}
-	int n = 0;
-	for (;;) {
-		int c;
-		for (;;) {
-			c = fgetc(f);
-			if (c == EOF) {
-				fclose(f);
-				return n;
-			}
-			if (!isspace(c)) {
-				break;
-			}
-		}
-		char buf[3];
-		buf[0] = c;
-		buf[1] = fgetc(f);
-		buf[2] = 0;
-		uint8_t b = strtol(buf, 0, 16);
-		page[n] = b;
-		n++;
-	}
-	fclose(f);
-	return n;
+	*familyp = atoi(buf) % 100;
+	sprintf(buf, "%s/%s.data", test_dir, name);
+	return buf;
 }
 
-void print_record(history_record_t *r) {
-	int minutes = r->duration / 60;
-	printf("  %s %02X %5d %4d\n", time_string(r->time), r->type, r->insulin, minutes);
+void run_test(char *name) {
+	int family;
+	char *filename = get_test_file(name, &family);
+	parse_data(filename, family);
+	static char json_file[50];
+	sprintf(json_file, "%s/%s.json", test_dir, name);
+	compare_with_json(json_file);
 }
 
 int main(int argc, char **argv) {
-	putenv("TZ=UTC");
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s raw-data-file\n", argv[0]);
-		exit(1);
+	for (int i = 0; i < NUM_TEST_FILES; i++) {
+		run_test(test_files[i]);
 	}
-	int nbytes = read_bytes(argv[1]);
-	int n = decode_history(page, family, history, nbytes);
-	printf("%d history records:\n", n);
-	for (int i = 0; i < n; i++) {
-		print_record(&history[i]);
-	}
+	exit_test();
 }

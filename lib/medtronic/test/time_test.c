@@ -1,23 +1,89 @@
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "testing.h"
 
-#include "medtronic.h"
-#include "pump_history.h"
+typedef struct {
+	char *byte_str;
+	char *time_str;
+} decode_time_case_t;
+
+decode_time_case_t decode_time_cases[] = {
+	{ "1F 40 00 01 05", "2005-01-01 00:00:31" },
+	{ "09 A2 0A 15 10", "2016-02-21 10:34:09" },
+	{ "42 22 54 65 10", "2016-04-05 20:34:02" },
+	{ "79 23 0C 12 10", "2016-04-18 12:35:57" },
+	{ "75 B7 13 04 10", "2016-06-04 19:55:53" },
+	{ "5D B3 0F 06 10", "2016-06-06 15:51:29" },
+	{ "40 94 12 0F 10", "2016-06-15 18:20:00" },
+	{ "B1 34 87 6B 12", "2018-08-11 07:52:49" },
+};
+#define NUM_DECODE_TIME_CASES	(sizeof(decode_time_cases)/sizeof(decode_time_cases[0]))
+
+void test_decode_time() {
+	for (int i = 0; i < NUM_DECODE_TIME_CASES; i++) {
+		decode_time_case_t *c = &decode_time_cases[i];
+		uint8_t *bytes = parse_bytes(c->byte_str);
+		time_t t = decode_time(bytes);
+		char *s = time_string(t);
+		if (strcmp(s, c->time_str) != 0) {
+			test_failed("[%d] decode_time(%s) = %s, want %s", i, c->byte_str, s, c->time_str);
+		}
+	}
+}
+
+typedef struct {
+	char *time_str;
+	char *json_str;
+} parse_json_time_case_t;
+
+parse_json_time_case_t parse_json_time_cases[] = {
+	{ "2005-01-01 00:00:31", "2005-01-01T00:00:31-04:00" },
+	{ "2016-02-21 10:34:09", "2016-02-21T10:34:09-04:00" },
+	{ "2016-04-05 20:34:02", "2016-04-05T20:34:02-04:00" },
+	{ "2016-04-18 12:35:57", "2016-04-18T12:35:57-04:00" },
+	{ "2016-06-04 19:55:53", "2016-06-04T19:55:53-04:00" },
+	{ "2016-06-06 15:51:29", "2016-06-06T15:51:29-04:00" },
+	{ "2016-06-15 18:20:00", "2016-06-15T18:20:00-04:00" },
+	{ "2018-08-11 07:52:49", "2018-08-11T07:52:49-04:00" },
+};
+#define NUM_PARSE_JSON_TIME_CASES	(sizeof(parse_json_time_cases)/sizeof(parse_json_time_cases[0]))
+
+void test_parse_json_time() {
+	for (int i = 0; i < NUM_PARSE_JSON_TIME_CASES; i++) {
+		parse_json_time_case_t *c = &parse_json_time_cases[i];
+		time_t t = parse_json_time(c->json_str);
+		char *s = time_string(t);
+		if (strcmp(s, c->time_str) != 0) {
+			test_failed("[%d] parse_json_time(%s) = %s, want %s", i, c->json_str, s, c->time_str);
+		}
+	}
+}
+
+typedef struct {
+	char *s;
+	time_t t;
+} parse_duration_case_t;
+
+parse_duration_case_t parse_duration_cases[] = {
+	{ "0s", 0 },
+	{ "30s", 30 },
+	{ "1m0s", 60 },
+	{ "1h30m0s", 90 * 60 },
+	{ "10h0m0s", 10 * 60 * 60 },
+};
+#define NUM_PARSE_DURATION_CASES	(sizeof(parse_duration_cases)/sizeof(parse_duration_cases[0]))
+
+void test_parse_duration() {
+	for (int i = 0; i < NUM_PARSE_DURATION_CASES; i++) {
+		parse_duration_case_t *c = &parse_duration_cases[i];
+		time_t t = parse_duration(c->s);
+		if (t != c->t) {
+			test_failed("[%d] parse_duration(%s) = %d, want %d", i, c->s, t, c->t);
+		}
+	}
+}
 
 int main(int argc, char **argv) {
-	putenv("TZ=UTC");
-	if (argc != 6) {
-		fprintf(stderr, "Usage: %s AA BB CC DD EE\n", argv[0]);
-		exit(1);
-	}
-	uint8_t data[5];
-	for (int i = 0; i < 5; i++) {
-		data[i] = strtol(argv[i + 1], 0, 16);
-	}
-	time_t t = decode_time(data);
-	struct tm *tm = gmtime(&t);
-	char buf[20];
-	strftime(buf, sizeof(buf), "%F %T", tm);
-	printf("%s\n", buf);
+	test_decode_time();
+	test_parse_json_time();
+	test_parse_duration();
+	exit_test();
 }

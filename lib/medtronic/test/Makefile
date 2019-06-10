@@ -1,12 +1,19 @@
-test_programs = history_test time_test
-
-all: $(test_programs)
+programs = decode_time time_test read_history history_test
+headers = testing.h ../medtronic.h ../pump_history.h
 
 CFLAGS += -Wall -isystem . -I .. -g
+LDFLAGS += -ljansson
 
-history_test: history_test.c ../history.c
+all: $(programs)
 
-time_test: time_test.c ../history.c
+$(programs): %: %.o common.o history.o json.o stringer.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+%.o: %.c $(headers)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+history.o: ../history.c
+	$(CC) $(CFLAGS) -c -o history.o ../history.c
 
 clean:
-	rm -f *.o $(test_programs)
+	rm -f *.o $(programs)
