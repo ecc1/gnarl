@@ -249,6 +249,7 @@ static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 		// Remove spurious final byte consisting of just one or two high bits.
 		uint8_t b = buf[n-1];
 		if (b == 0x80 || b == 0xC0) {
+			ESP_LOGD("rfm95", "end-of-packet glitch %X with RSSI %d", b >> 6, read_rssi());
 			n--;
 		}
 	}
