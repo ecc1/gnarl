@@ -15,6 +15,7 @@
 #define REG_FRF_MSB		0x06
 #define REG_FRF_MID		0x07
 #define REG_FRF_LSB		0x08
+#define REG_LNA			0x0C
 #define REG_RX_CONFIG		0x0D
 #define REG_RSSI_CONFIG		0x0E
 #define REG_RSSI		0x11
@@ -53,6 +54,14 @@
 #define MODE_TX			3
 #define MODE_FSRX		4
 #define MODE_RX			5
+
+// REG_LNA
+#define LNA_GAIN_MAX		(1 << 5)
+#define LNA_GAIN_MAX_6DB	(2 << 5)
+#define LNA_GAIN_MAX_12DB	(3 << 5)
+#define LNA_GAIN_MAX_24DB	(4 << 5)
+#define LNA_GAIN_MAX_36DB	(5 << 5)
+#define LNA_GAIN_MAX_48DB	(6 << 5)
 
 // REG_RX_CONFIG
 #define AFC_AUTO_ON		(1 << 4)
