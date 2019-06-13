@@ -52,7 +52,10 @@ void parse_data(char *filename, int family) {
 
 time_t parse_json_time(const char *str) {
 	struct tm tm = { .tm_isdst = -1 };
-	strptime(str, "%FT%T%z", &tm);
+	if (strptime(str, "%FT%T%z", &tm) == 0) {
+		fprintf(stderr, "malformed JSON time \"%s\"\n", str);
+		exit(1);
+	}
 	return mktime(&tm);
 }
 

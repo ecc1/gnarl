@@ -37,7 +37,7 @@ int pump_basal_rates(basal_rate_t *r, int max) {
 		if (i > 1 && rate == 0 && t == 0) {
 			break;
 		}
-		r->start = t;
+		r->start = half_hours(t);
 		r->rate = rate;
 	}
 	return count;
@@ -79,7 +79,7 @@ int pump_carb_ratios(carb_ratio_t *r, int max) {
 		if (t == 0 && count != 0) {
 			break;
 		}
-		r->start = t;
+		r->start = half_hours(t);
 		r->units = units;
 		if (fam <= 22) {
 			int v = data[i + 1];
@@ -110,19 +110,22 @@ carb_units_t pump_carb_units() {
 	return data[1];
 }
 
-int pump_clock(struct tm *tm) {
+time_t pump_clock() {
 	int n;
 	uint8_t *data = short_command(CMD_CLOCK, &n);
 	if (!data || n < 8 || data[0] != 7) {
 		return -1;
 	}
-	tm->tm_hour = data[1];
-	tm->tm_min = data[2];
-	tm->tm_sec = data[3];
-	tm->tm_year = two_byte_be_int(&data[4]) - 1900;
-	tm->tm_mon = data[6] - 1;
-	tm->tm_mday = data[7];
-	return 0;
+	struct tm tm = {
+		.tm_hour = data[1],
+		.tm_min = data[2],
+		.tm_sec = data[3],
+		.tm_year = two_byte_be_int(&data[4]) - 1900,
+		.tm_mon = data[6] - 1,
+		.tm_mday = data[7],
+		.tm_isdst = -1,
+	};
+	return mktime(&tm);
 }
 
 glucose_units_t pump_glucose_units() {
@@ -208,7 +211,7 @@ int pump_sensitivities(sensitivity_t *r, int max) {
 			break;
 		}
 		int s = (((v >> 6) & 0x1) << 8) | data[i + 1];
-		r->start = t;
+		r->start = half_hours(t);
 		r->units = units;
 		r->sensitivity = int_to_glucose(s, units);
 	}
@@ -288,7 +291,7 @@ int pump_targets(target_t *r, int max) {
 		if (t == 0 && count != 0) {
 			break;
 		}
-		r->start = t;
+		r->start = half_hours(t);
 		r->units = units;
 		r->low = int_to_glucose(data[i + 1], units);
 		r->high = fam > 12 ? int_to_glucose(data[i + 2], units) : r->low;

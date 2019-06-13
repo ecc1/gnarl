@@ -28,9 +28,9 @@ char *time_string(time_t t) {
 	return buf;
 }
 
-// Convert a number of half-hours into seconds.
-static inline time_t half_hours(int n) {
-	return 60 * 30 * n;
+time_t since_midnight(time_t t) {
+	struct tm *tm = localtime(&t);
+	return tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec;
 }
 
 // Return 1 for insulin-related events, 0 for events to skip, -1 on error.
@@ -311,3 +311,18 @@ int decode_history(uint8_t *page, int family, history_record_t *r, int max) {
 	}
 	return count;
 }
+
+#define DEFINE_SCHEDULE_LOOKUP(type)			\
+	DECLARE_SCHEDULE_LOOKUP(type) {			\
+		time_t d = since_midnight(t);		\
+		for (int i = 0; i < len; i++, r++) {	\
+			if (r->start > d)		\
+				break;			\
+		}					\
+		return r - 1;				\
+	}
+
+DEFINE_SCHEDULE_LOOKUP(basal_rate);
+DEFINE_SCHEDULE_LOOKUP(carb_ratio);
+DEFINE_SCHEDULE_LOOKUP(sensitivity);
+DEFINE_SCHEDULE_LOOKUP(target);

@@ -1,4 +1,4 @@
-programs = decode_time time_test read_history history_test
+programs = decode_time time_test read_history history_test schedule_test
 headers = testing.h ../medtronic.h ../pump_history.h
 
 CFLAGS += -Wall -isystem . -I .. -g
@@ -12,8 +12,8 @@ $(programs): %: %.o common.o history.o json.o stringer.o
 %.o: %.c $(headers)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-history.o: ../history.c
-	$(CC) $(CFLAGS) -c -o history.o ../history.c
+history.o: ../history.c $(headers)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f *.o $(programs)

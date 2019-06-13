@@ -45,4 +45,9 @@ static inline insulin_t int_to_insulin(int n, int fam) {
 	return 25 * n;
 }
 
+// Convert a number of half-hours into seconds.
+static inline time_t half_hours(int n) {
+	return 60 * 30 * n;
+}
+
 void print_bytes(const char *msg, const uint8_t *data, int len);

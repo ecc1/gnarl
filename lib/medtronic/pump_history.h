@@ -95,3 +95,4 @@ typedef struct {
 int decode_history(uint8_t *page, int family, history_record_t *r, int max);
 time_t decode_time(uint8_t *data);
 char *time_string(time_t t);
+time_t since_midnight(time_t t);

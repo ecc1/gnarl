@@ -81,9 +81,33 @@ void test_parse_duration() {
 	}
 }
 
+typedef struct {
+	char *ts;
+	time_t s;
+} since_midnight_case_t;
+
+since_midnight_case_t since_midnight_cases[] = {
+	{ "2015-01-01T09:00:00Z", 9 * 3600 },
+	{ "2016-06-15T20:30:00Z", 20 * 3600 + 30 * 60 },
+	{ "2010-11-30T23:59:59Z", 23 * 3600 + 59 * 60 + 59 },
+};
+#define NUM_SINCE_MIDNIGHT_CASES	(sizeof(since_midnight_cases)/sizeof(since_midnight_cases[0]))
+
+void test_since_midnight() {
+	for (int i = 0; i < NUM_SINCE_MIDNIGHT_CASES; i++) {
+		since_midnight_case_t *c = &since_midnight_cases[i];
+		time_t t = parse_json_time(c->ts);
+		time_t s = since_midnight(t);
+		if (s != c->s) {
+			test_failed("[%d] since_midnight(%s) = %d, want %d", i, c->ts, s, c->s);
+		}
+	}
+}
+
 int main(int argc, char **argv) {
 	test_decode_time();
 	test_parse_json_time();
 	test_parse_duration();
+	test_since_midnight();
 	exit_test();
 }
