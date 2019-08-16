@@ -61,7 +61,7 @@ SparkFun LiPo batteries.
 
 ### Initialize git submodules
 
-This repository contains two git submodules (in the `components` subdirectory).
+This repository contains git submodules (in the `components` subdirectory).
 Unless you cloned this repository with the `--recursive` option,
 those submodules won't be initialized yet.
 Use this command to initialize them:
@@ -76,14 +76,7 @@ git submodule status --recursive
 
 ### Set up the ESP32 environment
 
-1. [Follow these instructions to install the ESP32 toolchain.](https://docs.espressif.com/projects/esp-idf/en/stable/get-started/#setup-toolchain)
-
-1. Install the ESP-IDF framework with the  preview release of the NimBLE stack:
-```
-git clone -b feature/nimble-preview --recursive https://github.com/espressif/esp-idf.git
-```
-
-1. Set the `IDF_PATH` variable in your environment appropriately.
+1. [Follow these instructions to install the ESP-IDF development environment.](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html#installation-step-by-step)
 
 1. Build and flash one of the example applications to make sure you have a working setup.
 
@@ -100,8 +93,7 @@ git clone -b feature/nimble-preview --recursive https://github.com/espressif/esp
 ## Running GNARL
 
 Run [Loop](https://loopkit.github.io/loopdocs/) on your iPhone
-or run the experimental [Medtronic branch of AndroidAPS](https://github.com/andyrozman/AndroidAPS)
-on your Android phone.
+or run the [dev branch of AndroidAPS](https://github.com/MilosKozak/AndroidAPS) on your Android phone.
 GNARL should show up when you scan for a RileyLink.
 
 GNARL will show messages on the OLED display when your phone
