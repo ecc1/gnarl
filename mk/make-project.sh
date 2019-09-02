@@ -40,8 +40,8 @@ create_project() {
     mkdir main
     cd main
     ln -sv ../../$src/* .
-    cp ../../mk/component.mk component.mk
-    cp ../../mk/CMakeLists.main CMakeLists.txt
+    [ -f component.mk ] || cp ../../mk/component.mk component.mk
+    [ -f CMakeLists.txt ] || cp ../../mk/CMakeLists.main CMakeLists.txt
 
     cd ../..
 }
