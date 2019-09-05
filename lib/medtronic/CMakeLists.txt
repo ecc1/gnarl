@@ -1,4 +1,5 @@
-set(COMPONENT_ADD_INCLUDEDIRS .)
-set(COMPONENT_SRCDIRS .)
-set(COMPONENT_PRIV_REQUIRES radio)
-register_component()
+idf_component_register(
+	INCLUDE_DIRS .
+	SRC_DIRS .
+	PRIV_REQUIRES radio
+)
