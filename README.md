@@ -124,6 +124,15 @@ This repository contains a few applications ("projects" in ESP-IDF terminology) 
 * `mmtune` finds the frequency at which the pump responds
   with the strongest signal and displays the results graphically
 
+* `pumpclock` retrieves the time from a Medtronic insulin pump and
+  uses it to display a digital clock
+
+* `wifi` connects to a WiFi network, obtains an IP address, and prints
+  it on the serial console
+
+* `nightscout` retrieves recent entries from a Nightscout server and
+  prints them on the serial console
+
 To build the `blink` application, for example:
 
 1. In the top level of this repository, type `make blink`
@@ -143,3 +152,28 @@ It should look like this:
 	#define PUMP_ID		"123456"	// pump serial number (note that this is a string constant)
 	#define PUMP_FREQUENCY	916500000	// pump frequency
 	#define MMTUNE_START	916300000	// starting frequency for mmtune scans
+
+### WiFi configuration
+
+The WiFi configuration is hard-coded in the `include/wifi_config.h` file as follows:
+
+	#define WIFI_SSID	"network name"
+	#define WIFI_PASSWORD	"network password"
+
+### Nightscout configuration
+
+Nightscout server information is defined in`include/nightscout_config.h` as follows:
+
+    // DNS hostname, not a URL
+	#define NIGHTSCOUT_HOST		"your.nightscout.hostname"
+
+    // 40-character SHA-1 hash of your Nightscout API secret
+	#define NIGHTSCOUT_API_SECRET	"0123456789abcdef0123456789abcdef01234567"
+
+The SSL layer requires the root certificate used by the Nightscout
+server to be available at compile time in the file `include/root_cert.pem`.
+You can extract it from the output of this command:
+
+    openssl s_client -showcerts -connect NIGHTSCOUT_HOST:443 </dev/null
+
+The root certificate is the last one in the chain.
