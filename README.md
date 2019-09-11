@@ -177,3 +177,14 @@ You can extract it from the output of this command:
     openssl s_client -showcerts -connect NIGHTSCOUT_HOST:443 </dev/null
 
 The root certificate is the last one in the chain.
+
+### Time zone configuration
+
+The local time zone is hard-coded in the `include/timezone.h` file.
+For example:
+
+    #define TZ	"EST5EDT,M3.2.0/2,M11.1.0"
+
+The time zone must be in one of the first two formats
+[specified here.](https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
+In particular, the "America/New_York" format is *not* supported.
