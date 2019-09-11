@@ -108,7 +108,7 @@ const char *find_body(const char *response) {
 	return 0;
 }
 
-const cJSON *parse_response(const char *response) {
+cJSON *parse_response(const char *response) {
 	const char *body = find_body(response);
 	if (!body) {
 		return 0;
@@ -160,7 +160,7 @@ void app_main(void) {
 	if (!resp) {
 		return;
 	}
-	const cJSON *root = parse_response(resp);
+	cJSON *root = parse_response(resp);
 	if (!root || !cJSON_IsArray(root)) {
 		ESP_LOGE(TAG, "expected JSON array from %s", NS_URL);
 		puts(resp);
