@@ -52,17 +52,16 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 		}
 	}
 	if (event_base == IP_EVENT) {
-		ESP_LOGD(TAG, "IP_EVENT");
 		switch (event_id) {
 		case IP_EVENT_STA_GOT_IP:
-			ESP_LOGD(TAG, "STA_GOT_IP");
+			ESP_LOGD(TAG, "IP_EVENT STA_GOT_IP");
 			retry_num = 0;
 			ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
 			ip_address = ip4addr_ntoa(&event->ip_info.ip);
 			xTaskNotify(waiting_task, 0, 0);
 			return;
 		default:
-			ESP_LOGD(TAG, "unexpected event_id = %d", event_id);
+			ESP_LOGD(TAG, "unexpected IP_EVENT %d", event_id);
 			return;
 		}
 	}
