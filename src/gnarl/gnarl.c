@@ -350,5 +350,5 @@ static void gnarl_loop() {
 void start_gnarl_task() {
 	request_queue = xQueueCreate(QUEUE_LENGTH, sizeof(rfspy_request_t));
 	// Start radio task with high priority to avoid receiving truncated packets.
-	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, 24, 0);
+	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, tskIDLE_PRIORITY + 24, 0);
 }
