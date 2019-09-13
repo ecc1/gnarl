@@ -146,7 +146,7 @@ run `make monitor` to see the output.
 ### Pump-specific configuration
 
 Some of the applications require the pump serial number or frequency
-to be defined in the `include/pump.h` file.
+to be defined in the `include/pump_config.h` file.
 It should look like this:
 
 	#define PUMP_ID		"123456"	// pump serial number (note that this is a string constant)

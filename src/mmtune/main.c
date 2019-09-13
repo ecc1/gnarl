@@ -5,7 +5,7 @@
 #include "medtronic.h"
 #include "module.h"
 #include "oled.h"
-#include "pump.h"
+#include "pump_config.h"
 #include "rfm95.h"
 
 int model;

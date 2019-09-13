@@ -4,7 +4,7 @@
 
 #include <esp_task_wdt.h>
 
-#include "pump.h"
+#include "pump_config.h"
 #include "rfm95.h"
 
 #define TIMEOUT 60*1000	// 1 minute, in milliseconds
