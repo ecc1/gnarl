@@ -1,4 +1,4 @@
-# GN
+# PICKLE is BETTER than RileyLink
 
 
 ## Warning
