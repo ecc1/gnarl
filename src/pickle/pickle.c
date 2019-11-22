@@ -13,8 +13,6 @@
 #include "commands.h"
 #include "rfm95.h"
 
-
-
 #define MAX_PARAM_LEN	16
 #define MAX_PACKET_LEN	107
 
@@ -293,8 +291,8 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	ESP_LOGD(TAG, "rfspy_command %d, queue length %d", cmd, uxQueueMessagesWaiting(request_queue));
 }
 
-static void pickle_loop() {
-	ESP_LOGD(TAG, "starting pickle_loop");
+static void gnarl_loop() {
+	ESP_LOGD(TAG, "starting gnarl_loop");
 	const int timeout_ms = 60*MILLISECONDS;
 	for (;;) {
 		rfspy_request_t req;
@@ -342,11 +340,12 @@ static void pickle_loop() {
 			ESP_LOGE(TAG, "unimplemented rfspy command %d", req.command);
 			break;
 		}
+
 	}
 }
 
-void start_pickle_task() {
+void start_gnarl_task() {
 	request_queue = xQueueCreate(QUEUE_LENGTH, sizeof(rfspy_request_t));
 	// Start radio task with high priority to avoid receiving truncated packets.
-	xTaskCreate(pickle_loop, "pickle", 4096, 0, 24, 0);
+	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, 24, 0);
 }

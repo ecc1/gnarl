@@ -56,11 +56,11 @@ The battery connects to a 2-pin female JST 1.25mm connector.
 ## Running
 
 Run [Loop](https://loopkit.github.io/loopdocs/) on your iPhone.
-pickle should show up when you scan for a RileyLink.
+Pickle should show up when you scan for a RileyLink.
 
-pickle will show messages on the OLED display when your phone
+Pickle will show messages on the OLED display when your phone
 connects and disconnects. Pushing the button will display the current
-status. pickle may not respond to the button press immediately if it is
+status. Pickle may not respond to the button press immediately if it is
 communicating with the pump, due to scheduling priorities.
 
 ### Pump-specific configuration
@@ -69,9 +69,9 @@ Some of the applications require the pump serial number or frequency
 to be defined in the `include/pump.h` file.
 It should look like this:
 
-	#define PUMP_ID		"123456"	// pump serial number (note that this is a string constant)
-	#define PUMP_FREQUENCY	916500000	// pump frequency
-	#define MMTUNE_START	916300000	// starting frequency for mmtune scans
+ #define PUMP_ID		"123456"	// pump serial number (note that this is a string constant)
+ #define PUMP_FREQUENCY	868500000	// pump frequency
+ #define MMTUNE_START	868300000	// starting frequency for mmtune scans
 
 
 ### Time zone configuration
@@ -79,7 +79,7 @@ It should look like this:
 The local time zone is hard-coded in the `include/timezone.h` file.
 For example (Moscow):
 
-    #define TZ	"EST5EDT,M3.2.0/2,M11.1.0"
+    #define TZ	"MSK-3MSD
 
 The time zone must be in one of the first two formats
 [specified here.](https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)

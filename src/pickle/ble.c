@@ -382,8 +382,8 @@ static void host_task(void *arg) {
 	nimble_port_run();
 }
 
-void pickle_init() {
-	start_pickle_task();
+void gnarl_init() {
+	start_gnarl_task();
 
 	esp_err_t ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -398,7 +398,7 @@ void pickle_init() {
 
 	server_init();
 
-	int err = ble_svc_gap_device_name_set("pickle");
+	int err = ble_svc_gap_device_name_set("GNARL");
 	assert(!err);
 
 	ble_store_ram_init();
