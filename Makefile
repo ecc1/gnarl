@@ -1,4 +1,4 @@
-default_project = gnarl
+default_project = pickle
 
 projects = $(default_project) $(filter-out $(default_project),$(notdir $(wildcard src/*)))
 

@@ -1,11 +1,11 @@
 #!/bin/sh -e
 
-gnarl_dir=$(readlink -f $(dirname $0)/..)
-echo "GNARL top level: $gnarl_dir"
+pickle_dir=$(readlink -f $(dirname $0)/..)
+echo "pickle top level: $pickle_dir"
 
 (cd $IDF_PATH && echo "ESP-IDF version: $(git describe --abbrev=0)")
 
-projects=$(basename -a $gnarl_dir/src/*)
+projects=$(basename -a $pickle_dir/src/*)
 
 nice_make() {
     ionice -c3 nice make -j
