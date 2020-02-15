@@ -9,7 +9,7 @@
 #include "pump_config.h"
 #include "rfm95.h"
 
-struct tm pump_time;
+time_t pump_time;
 
 void get_time() {
 	printf("waking pump %s\n", PUMP_ID);
@@ -17,11 +17,12 @@ void get_time() {
 		printf("pump_wakeup() failed\n");
 		return;
 	}
-	if (pump_clock(&pump_time) != 0) {
+	pump_time = pump_clock();
+	if (pump_time == -1) {
 		printf("pump_clock() failed\n");
 		return;
 	}
-	struct timeval tv = { .tv_sec = mktime(&pump_time) };
+	struct timeval tv = { .tv_sec = pump_time };
 	settimeofday(&tv, 0);
 }
 
