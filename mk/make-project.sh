@@ -43,7 +43,10 @@ create_project() {
     [ -f component.mk ] || cp ../../mk/component.mk component.mk
     [ -f CMakeLists.txt ] || cp ../../mk/CMakeLists.main CMakeLists.txt
 
-    cd ../..
+    cd ..
+    [ -f main/config.patch ] && patch -p1 < main/config.patch
+
+    cd ..
 }
 
 if ! project_is_current; then
