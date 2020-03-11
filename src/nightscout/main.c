@@ -2,26 +2,19 @@
 #include <string.h>
 #include <time.h>
 
-#include <nvs_flash.h>
-
 #include <cJSON.h>
+#include <nvs_flash.h>
 
 #define TAG		"NS"
 #define LOG_LOCAL_LEVEL	ESP_LOG_DEBUG
 #include <esp_log.h>
-#include <esp_tls.h>
+#include <esp_http_client.h>
 
 #include "nightscout_config.h"
 #include "timezone.h"
 #include "wifi.h"
 
-#define NIGHTSCOUT_URL	"https://" NIGHTSCOUT_HOST
-#define NS_URL		NIGHTSCOUT_URL "/api/v1/entries.json"
-
-static const char *request = "GET " NS_URL " HTTP/1.0\r\n"
-    "Host: "NIGHTSCOUT_HOST"\r\n"
-    "User-Agent: esp-idf/4.1 esp32\r\n"
-    "\r\n";
+#define NIGHTSCOUT_URL	"https://" NIGHTSCOUT_HOST "/api/v1/entries.json"
 
 // Root cert for Nightscout server.
 // The PEM file was extracted from the output of this command:
@@ -31,92 +24,46 @@ static const char *request = "GET " NS_URL " HTTP/1.0\r\n"
 // To embed it in the app binary, the PEM file is named
 // in the component.mk COMPONENT_EMBED_TXTFILES variable.
 
-extern const uint8_t root_cert_pem_start[] asm("_binary_root_cert_pem_start");
-extern const uint8_t root_cert_pem_end[]   asm("_binary_root_cert_pem_end");
+extern const char root_cert_pem_start[] asm("_binary_root_cert_pem_start");
 
-static const char *https_get() {
-	esp_tls_cfg_t cfg = {
-		.cacert_buf  = root_cert_pem_start,
-		.cacert_bytes = root_cert_pem_end - root_cert_pem_start,
+static char response[4096];
+
+static esp_err_t https_get(void) {
+	esp_http_client_config_t config = {
+		.url = NIGHTSCOUT_URL,
+		.cert_pem = root_cert_pem_start,
+		.timeout_ms = 10000,
 	};
-	struct esp_tls *tls = esp_tls_conn_http_new(NS_URL, &cfg);
-	if (tls == 0) {
-		ESP_LOGE(TAG, "connection to %s failed", NIGHTSCOUT_URL);
-		return 0;
+	esp_http_client_handle_t client = esp_http_client_init(&config);
+	esp_err_t err = esp_http_client_open(client, 0);
+	if (err != ESP_OK) {
+		return err;
 	}
-	ESP_LOGI(TAG, "connected to %s", NIGHTSCOUT_URL);
-
-	char *p = (char *)request;
-	int len = strlen(request);
-	while (len > 0) {
-		int n = esp_tls_conn_write(tls, p, len);
-		if (n == MBEDTLS_ERR_SSL_WANT_READ || n == MBEDTLS_ERR_SSL_WANT_WRITE) {
-			continue;
-		}
-		if (n < 0) {
-			ESP_LOGE(TAG, "esp_tls_conn_write returned %d", n);
-			esp_tls_conn_delete(tls);
-			return 0;
-		}
-		if (n == 0) {
-			ESP_LOGE(TAG, "no response (connection closed)");
-			esp_tls_conn_delete(tls);
-			return 0;
-		}
-		ESP_LOGI(TAG, "%d bytes written", n);
-		p += n;
-		len -= n;
+	int content_length = esp_http_client_fetch_headers(client);
+	char *p = response;
+	int len = content_length;
+	if (len >= sizeof(response)) {
+		ESP_LOGE(TAG, "%d-byte HTTP response is too large for %d-byte buffer",
+			 content_length, sizeof(response));
+		len = sizeof(response)-1;
 	}
-
-	static char response[4096];
-	p = response;
-	len = sizeof(response)-1;
 	while (len > 0) {
-		int n = esp_tls_conn_read(tls, p, len);
-		if (n == MBEDTLS_ERR_SSL_WANT_READ || n == MBEDTLS_ERR_SSL_WANT_WRITE) {
-			continue;
-		}
-		if (n < 0) {
-			ESP_LOGE(TAG, "esp_tls_conn_read returned %d", n);
-			esp_tls_conn_delete(tls);
-			return 0;
-		}
-		if (n == 0) {
-			ESP_LOGI(TAG, "connection closed");
+		int n = esp_http_client_read(client, p, len);
+		if (n <= 0) {
+			ESP_LOGE(TAG, "esp_http_client_read returned %d", n);
+			err = ESP_FAIL;
 			break;
 		}
-		ESP_LOGI(TAG, "%d bytes read", n);
 		p += n;
 		len -= n;
-	}
-	if (len == 0) {
-		// Response buffer may be too small!
-		ESP_LOGW(TAG, "%d-byte response from %s", sizeof(response)-1, NS_URL);
-	}
+        }
 	*p = 0;
-	esp_tls_conn_delete(tls);
-	return response;
+	esp_http_client_close(client);
+	esp_http_client_cleanup(client);
+	return err;
 }
 
-// Find the body after the \r\n\r\n separator.
-const char *find_body(const char *response) {
-	for (const char *p = response; *p; p++) {
-		if (p[0] == '\r' && p[1] == '\n' && p[2] == '\r' && p[3] == '\n') {
-			return &p[4];
-		}
-	}
-	return 0;
-}
-
-cJSON *parse_response(const char *response) {
-	const char *body = find_body(response);
-	if (!body) {
-		return 0;
-	}
-	return cJSON_Parse(body);
-}
-
-void print_entry(const cJSON *e) {
+static void print_entry(const cJSON *e) {
 	const cJSON *item = cJSON_GetObjectItem(e, "type");
 	if (!item) {
 		ESP_LOGE(TAG, "JSON entry has no type field");
@@ -146,24 +93,22 @@ void print_entry(const cJSON *e) {
 }
 
 void app_main(void) {
-	esp_err_t ret = nvs_flash_init();
-	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+	esp_err_t err = nvs_flash_init();
+	if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
 		ESP_ERROR_CHECK(nvs_flash_erase());
-		ret = nvs_flash_init();
+		err = nvs_flash_init();
 	}
-	ESP_ERROR_CHECK(ret);
+	ESP_ERROR_CHECK(err);
 	wifi_init();
 	ESP_LOGI(TAG, "setting TZ = %s", TZ);
 	setenv("TZ", TZ, 1);
 	tzset();
-	const char *resp = https_get();
-	if (!resp) {
-		return;
-	}
-	cJSON *root = parse_response(resp);
+	err = https_get();
+	ESP_ERROR_CHECK(err);
+	cJSON *root = cJSON_Parse(response);
 	if (!root || !cJSON_IsArray(root)) {
-		ESP_LOGE(TAG, "expected JSON array from %s", NS_URL);
-		puts(resp);
+		ESP_LOGE(TAG, "expected JSON array from %s", NIGHTSCOUT_URL);
+		ESP_LOGE(TAG, "received: %s\n", response);
 		return;
 	}
 	int n = cJSON_GetArraySize(root);
