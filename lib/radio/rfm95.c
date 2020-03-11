@@ -175,7 +175,9 @@ void transmit(uint8_t *buf, int count) {
 	write_register(REG_SEQ_CONFIG_1, SEQUENCER_START | IDLE_MODE_SLEEP | FROM_START_TX_ON_FIFO_LEVEL);
 	// Specify fixed length packet format (including final zero byte)
 	// so PacketSent interrupt will terminate Transmit state.
-	write_register(REG_PACKET_CONFIG_1, ((count + 1) >> 8) & PAYLOAD_LENGTH_MSB_MASK);
+	write_register(REG_PACKET_CONFIG_1, PACKET_FORMAT_FIXED);
+	uint8_t length_msb = ((count + 1) >> 8) & PAYLOAD_LENGTH_MSB_MASK;
+	write_register(REG_PACKET_CONFIG_2, PACKET_MODE | length_msb);
 	write_register(REG_PAYLOAD_LENGTH, (count + 1) & 0xFF);
 	int n = count < FIFO_SIZE ? count : FIFO_SIZE;
 	xmit(buf, n);
