@@ -3,55 +3,40 @@
 project="$1"
 src="src/$project"
 
+if [ "$(basename $(pwd))" != gnarl ]; then
+    echo "script must be run from the top-level gnarl directory"
+    exit 1
+fi
+
 if [ ! -d "$src" ]; then
     echo "project source directory $src not found"
     exit 1
 fi
 
-current_for_make() {
-    [ -d project ] && \
-    [ -f project/Makefile ] && \
-    grep ^PROJECT_NAME project/Makefile | grep -q $project
-}
+# project/build directory will be owned by root if using docker
+sudo rm -r project/build
+rm -fr project
+mkdir project
+cd project
 
-current_for_cmake() {
-    [ -d project ] && \
-    [ -f project/CMakeLists.txt ] && \
-    grep ^project project/CMakeLists.txt | grep -q $project
-}
+cp -a ../components .
+cp -a ../include .
+cp -a ../lib .
+sed "s/xyzzy/$project/" < ../mk/Makefile > Makefile
+sed "s/xyzzy/$project/" < ../mk/CMakeLists.project > CMakeLists.txt
+cp ../mk/sdkconfig .
+cp ../mk/partitions.csv .
 
-project_is_current() {
-    current_for_make && current_for_cmake
-}
+mkdir main
+cd main
+cp -av ../../$src/* .
+[ -f component.mk ] || cp -v ../../mk/component.mk component.mk
+[ -f CMakeLists.txt ] || cp -v ../../mk/CMakeLists.main CMakeLists.txt
 
-create_project() {
-    rm -fr project
-    mkdir project
-    cd project
+cd ..
+[ -f main/config.patch ] && patch -p1 < main/config.patch
 
-    ln -s ../components .
-    ln -s ../include .
-    ln -s ../lib .
-    sed "s/xyzzy/$project/" < ../mk/Makefile > Makefile
-    sed "s/xyzzy/$project/" < ../mk/CMakeLists.project > CMakeLists.txt
-    cp ../mk/sdkconfig .
-    cp ../mk/partitions.csv .
-
-    mkdir main
-    cd main
-    ln -sv ../../$src/* .
-    [ -f component.mk ] || cp ../../mk/component.mk component.mk
-    [ -f CMakeLists.txt ] || cp ../../mk/CMakeLists.main CMakeLists.txt
-
-    cd ..
-    [ -f main/config.patch ] && patch -p1 < main/config.patch
-
-    cd ..
-}
-
-if ! project_is_current; then
-    create_project
-fi
+cd ..
 
 echo Initial setup of $project project is complete.
 echo 'Now change to the "project" subdirectory and run "make" or "idf.py build".'
