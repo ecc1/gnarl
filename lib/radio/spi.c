@@ -9,7 +9,7 @@
 static spi_device_handle_t spi_dev;
 
 void spi_init() {
-	//Initialize the SPI bus.
+	// Initialize the SPI bus.
 	spi_bus_config_t buscfg = {
 		.mosi_io_num   = LORA_MOSI,
 		.miso_io_num   = LORA_MISO,
