@@ -14,29 +14,30 @@ if [ ! -d "$src" ]; then
 fi
 
 # project/build directory will be owned by root if using docker
-sudo rm -r project/build
+if [ -d project/build ] && [ $(stat --format=%U project/build) = root ]; then
+    sudo rm -fr project/build
+fi
 rm -fr project
+
 mkdir project
 cd project
 
-cp -a ../components .
+cp -a ../$src main
+mv main/sdkconfig .
+if [ -f main/dependencies ]; then
+    mv main/dependencies .
+    mkdir components
+    for dep in $(cat dependencies); do
+	cp -a ../lib/$dep components
+    done
+fi
 cp -a ../include .
-cp -a ../lib .
 sed "s/xyzzy/$project/" < ../mk/Makefile > Makefile
 sed "s/xyzzy/$project/" < ../mk/CMakeLists.project > CMakeLists.txt
-cp ../mk/sdkconfig .
 cp ../mk/partitions.csv .
 
-mkdir main
 cd main
-cp -av ../../$src/* .
-[ -f component.mk ] || cp -v ../../mk/component.mk component.mk
-[ -f CMakeLists.txt ] || cp -v ../../mk/CMakeLists.main CMakeLists.txt
+[ -f component.mk ] || cp ../../mk/component.mk component.mk
+[ -f CMakeLists.txt ] || cp ../../mk/CMakeLists.main CMakeLists.txt
 
-cd ..
-[ -f main/config.patch ] && patch -p1 < main/config.patch
-
-cd ..
-
-echo Initial setup of $project project is complete.
-echo 'Now change to the "project" subdirectory and run "make" or "idf.py build".'
+echo The $project project has been set up in the '"project"' subdirectory.
