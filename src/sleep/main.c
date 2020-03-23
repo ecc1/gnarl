@@ -3,7 +3,7 @@
 
 #include <driver/gpio.h>
 #include <esp_sleep.h>
-#include <rom/uart.h>
+#include <esp32/rom/uart.h>
 
 #include "module.h"
 
@@ -34,9 +34,7 @@ static void print_wakeup_reason() {
 }
 
 void app_main() {
-	gpio_pad_select_gpio(LED);
 	gpio_set_direction(LED, GPIO_MODE_OUTPUT);
-	gpio_pad_select_gpio(BUTTON);
 	gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
 	esp_sleep_enable_ext0_wakeup(BUTTON, 0);
 	for (;;) {
