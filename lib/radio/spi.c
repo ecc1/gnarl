@@ -27,7 +27,7 @@ void spi_init() {
 		.command_bits	= 8,
 		.address_bits	= 0,
 		.mode		= 0,
-		.clock_speed_hz = 1*MEGAHERTZ,
+		.clock_speed_hz = 5*MEGAHERTZ,
 		.spics_io_num	= LORA_CS,
 		.queue_size	= 1,
 	};
