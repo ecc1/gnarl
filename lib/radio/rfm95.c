@@ -1,6 +1,7 @@
 #include <unistd.h>
 
-#define LOG_LOCAL_LEVEL	ESP_LOG_DEBUG
+#define TAG		"rfm95"
+
 #include <esp_log.h>
 #include <esp_sleep.h>
 #include <esp32/rom/uart.h>
@@ -13,14 +14,6 @@
 
 #define MILLISECONDS	1000
 
-void rfm95_reset() {
-	gpio_set_direction(LORA_RST, GPIO_MODE_OUTPUT);
-	gpio_set_level(LORA_RST, 0);
-	usleep(10*MILLISECONDS);
-	gpio_set_level(LORA_RST, 1);
-	usleep(10*MILLISECONDS);
-}
-
 static inline uint8_t read_mode() {
 	return read_register(REG_OP_MODE) & OP_MODE_MASK;
 }
@@ -28,13 +21,22 @@ static inline uint8_t read_mode() {
 #define MAX_WAIT	1000
 
 static void set_mode(uint8_t mode) {
+	uint8_t cur_mode = read_mode();
+	if (mode == cur_mode) {
+		return;
+	}
+	ESP_LOGD(TAG, "set_mode %d -> %d", cur_mode, mode);
 	write_register(REG_OP_MODE, FSK_OOK_MODE | MODULATION_OOK | mode);
+	if (cur_mode == MODE_SLEEP) {
+		usleep(500);
+	}
 	for (int w = 0; w < MAX_WAIT; w++) {
-		if (read_mode() == mode) {
+		cur_mode = read_mode();
+		if (cur_mode == mode) {
 			return;
 		}
 	}
-	printf("set_mode(%d) timeout in mode %d\n", mode, read_mode());
+	ESP_LOGI(TAG, "set_mode(%d) timeout in mode %d", mode, cur_mode);
 }
 
 static inline void set_mode_sleep() {
@@ -51,6 +53,21 @@ static inline void set_mode_receive() {
 
 static inline void set_mode_transmit() {
 	set_mode(MODE_TX);
+}
+
+static inline void sequencer_stop() {
+	write_register(REG_SEQ_CONFIG_1, SEQUENCER_STOP);
+}
+
+void rfm95_reset() {
+	ESP_LOGD(TAG, "reset");
+	sequencer_stop();
+	set_mode_sleep();
+	gpio_set_direction(LORA_RST, GPIO_MODE_OUTPUT);
+	gpio_set_level(LORA_RST, 0);
+	usleep(100);
+	gpio_set_level(LORA_RST, 1);
+	usleep(5*MILLISECONDS);
 }
 
 static volatile int rx_packets;
@@ -89,8 +106,8 @@ void rfm95_init() {
 	gpio_wakeup_enable(DIO2, GPIO_INTR_HIGH_LEVEL);
 	esp_sleep_enable_gpio_wakeup();
 
-	// Must be in Sleep mode first before the second call can change to FSK/OOK mode.
-	set_mode_sleep();
+	// Must be in Sleep mode to change to FSK/OOK mode.
+	// Initial change to Sleep mode was done in rfm95_reset().
 	set_mode_sleep();
 
 	// Ideal bit rate is 16384 bps; this works out to 16385 bps.
@@ -147,9 +164,9 @@ static bool wait_for_fifo_non_empty() {
 			return true;
 		}
 	}
-	write_register(REG_SEQ_CONFIG_1, SEQUENCER_STOP);
+	sequencer_stop();
 	set_mode_sleep();
-	printf("FIFO still full; flags = %02X\n", read_fifo_flags());
+	ESP_LOGI(TAG, "FIFO still full; flags = %02X", read_fifo_flags());
 	return false;
 }
 
@@ -158,21 +175,27 @@ static void wait_for_transmit_done() {
 	for (int w = 0; w < MAX_WAIT; w++) {
 		mode = read_mode();
 		if (mode == MODE_STDBY) {
+			ESP_LOGD(TAG, "transmit done; waits = %d", w);
 			return;
 		}
 	}
-	write_register(REG_SEQ_CONFIG_1, SEQUENCER_STOP);
+	sequencer_stop();
 	set_mode_sleep();
-	printf("transmit still not done; mode = %d\n", mode);
+	ESP_LOGI(TAG, "transmit still not done; mode = %d", mode);
 }
 
 void transmit(uint8_t *buf, int count) {
-	// Change to Standby mode in case an earlier receive timeout left the radio in Receive mode.
+	ESP_LOGD(TAG, "transmit %d-byte packet", count);
 	set_mode_standby();
 	clear_fifo();
 	// Automatically enter Transmit state on FifoLevel interrupt.
 	write_register(REG_FIFO_THRESH, TX_START_CONDITION);
-	write_register(REG_SEQ_CONFIG_1, SEQUENCER_START | IDLE_MODE_SLEEP | FROM_START_TX_ON_FIFO_LEVEL);
+	write_register(REG_SEQ_CONFIG_1,
+		       SEQUENCER_START |
+		       IDLE_MODE_SLEEP |
+		       FROM_START_TO_TX_ON_FIFO_LEVEL |
+		       LOW_POWER_SELECT_OFF |
+		       FROM_TX_TO_LOW_POWER);
 	// Specify fixed length packet format (including final zero byte)
 	// so PacketSent interrupt will terminate Transmit state.
 	write_register(REG_PACKET_CONFIG_1, PACKET_FORMAT_FIXED);
@@ -181,6 +204,7 @@ void transmit(uint8_t *buf, int count) {
 	write_register(REG_PAYLOAD_LENGTH, (count + 1) & 0xFF);
 	int n = count < FIFO_SIZE ? count : FIFO_SIZE;
 	xmit(buf, n);
+	ESP_LOGD(TAG, "after xmit: mode = %d", read_mode());
 	while (n < count) {
 		if (!wait_for_fifo_non_empty()) return;
 		xmit_byte(buf[n]);
@@ -194,8 +218,12 @@ void transmit(uint8_t *buf, int count) {
 	tx_packets++;
 }
 
-static inline bool packet_seen() {
-	return (read_register(REG_IRQ_FLAGS_1) & SYNC_ADDRESS_MATCH) != 0;
+static bool packet_seen() {
+	bool seen = (read_register(REG_IRQ_FLAGS_1) & SYNC_ADDRESS_MATCH) != 0;
+	if (seen) {
+		ESP_LOGD(TAG, "incoming packet seen");
+	}
+	return seen;
 }
 
 static inline uint8_t recv_byte() {
@@ -212,16 +240,18 @@ typedef void wait_fn_t(int);
 
 static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 	// Use unlimited length packet format (data sheet section 4.2.13.2).
-	write_register(REG_PACKET_CONFIG_1, 0);
+	write_register(REG_PACKET_CONFIG_1, PACKET_FORMAT_FIXED);
 	write_register(REG_PAYLOAD_LENGTH, 0);
 	gpio_intr_enable(DIO2);
+	ESP_LOGD(TAG, "starting receive");
 	set_mode_receive();
 	if (!packet_seen()) {
 		// Stay in RX mode.
 		wait_fn(timeout);
 		if (!packet_seen()) {
 			set_mode_sleep();
-			return 0; // timeout
+			ESP_LOGD(TAG, "receive timeout");
+			return 0;
 		}
 	}
 	last_rssi = read_register(REG_RSSI);
@@ -232,7 +262,7 @@ static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 			usleep(500);
 			w++;
 			if (w >= MAX_WAIT) {
-				ESP_LOGD("rfm95", "max RX FIFO wait reached");
+				ESP_LOGD(TAG, "max RX FIFO wait reached");
 				break;
 			}
 			continue;
@@ -251,7 +281,7 @@ static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 		// Remove spurious final byte consisting of just one or two high bits.
 		uint8_t b = buf[n-1];
 		if (b == 0x80 || b == 0xC0) {
-			ESP_LOGD("rfm95", "end-of-packet glitch %X with RSSI %d", b >> 6, read_rssi());
+			ESP_LOGD(TAG, "end-of-packet glitch %X with RSSI %d", b >> 6, read_rssi());
 			n--;
 		}
 	}
@@ -285,9 +315,11 @@ static void wait_until_interrupt(int timeout) {
 #else
 
 static void wait_until_interrupt(int timeout) {
+	ESP_LOGD(TAG, "waiting until interrupt");
 	rx_waiting_task = xTaskGetCurrentTaskHandle();
 	xTaskNotifyWait(0, 0, 0, pdMS_TO_TICKS(timeout));
 	rx_waiting_task = 0;
+	ESP_LOGD(TAG, "finished waiting");
 }
 
 #endif
