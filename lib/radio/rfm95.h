@@ -45,6 +45,7 @@
 
 // REG_OP_MODE
 #define FSK_OOK_MODE		(0 << 7)
+#define MODULATION_FSK		(0 << 5)
 #define MODULATION_OOK		(1 << 5)
 
 #define OP_MODE_MASK		0x7
@@ -96,11 +97,21 @@
 // REG_FIFO_THRESH
 #define TX_START_CONDITION	(1 << 7)
 
-// REG_SEQ_CONFIG
+// REG_SEQ_CONFIG_1
 #define SEQUENCER_START			(1 << 7)
 #define SEQUENCER_STOP			(1 << 6)
+#define IDLE_MODE_STANDBY		(0 << 5)
 #define IDLE_MODE_SLEEP			(1 << 5)
-#define FROM_START_TX_ON_FIFO_LEVEL	(3 << 3)
+#define FROM_START_TO_LOW_POWER		(0 << 3)
+#define FROM_START_TO_RX		(1 << 3)
+#define FROM_START_TO_TX		(2 << 3)
+#define FROM_START_TO_TX_ON_FIFO_LEVEL	(3 << 3)
+#define	LOW_POWER_SELECT_OFF		(0 << 2)
+#define	LOW_POWER_SELECT_IDLE		(1 << 2)
+#define FROM_IDLE_TO_TX			(0 << 1)
+#define FROM_IDLE_TO_RX			(1 << 1)
+#define FROM_TX_TO_LOW_POWER		(0 << 0)
+#define FROM_TX_TO_RX			(1 << 0)
 
 // REG_IRQ_FLAGS_1
 #define MODE_READY		(1 << 7)
