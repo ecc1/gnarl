@@ -17,6 +17,7 @@ void get_pump_info() {
 	printf("waking pump %s\n", PUMP_ID);
 	if (!pump_wakeup()) {
 		printf("wakeup failed\n");
+		model = -1;
 		return;
 	}
 	model = pump_model();
@@ -37,6 +38,13 @@ char str[100];
 void display_info() {
 	oled_clear();
 	oled_font_medium();
+	if (model == -1) {
+		oled_align_center();
+		oled_draw_string(64, 30, "Unable to");
+		oled_draw_string(64, 50, "wake up pump");
+		oled_update();
+		return;
+	}
 	oled_align_left();
 	sprintf(str, "%d.%d U/hr  %d min", FP1(basal_rate), basal_minutes);
 	oled_draw_string(0, 20, str);
@@ -56,7 +64,7 @@ void splash() {
 }
 
 #define SECONDS		1000000
-#define DISPLAY_TIMEOUT	(5*SECONDS)
+#define DISPLAY_TIMEOUT	(10*SECONDS)
 
 void app_main() {
 	oled_init();
