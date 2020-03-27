@@ -61,8 +61,6 @@ static inline void sequencer_stop() {
 
 void rfm95_reset() {
 	ESP_LOGD(TAG, "reset");
-	sequencer_stop();
-	set_mode_sleep();
 	gpio_set_direction(LORA_RST, GPIO_MODE_OUTPUT);
 	gpio_set_level(LORA_RST, 0);
 	usleep(100);
@@ -106,8 +104,8 @@ void rfm95_init() {
 	gpio_wakeup_enable(DIO2, GPIO_INTR_HIGH_LEVEL);
 	esp_sleep_enable_gpio_wakeup();
 
-	// Must be in Sleep mode to change to FSK/OOK mode.
-	// Initial change to Sleep mode was done in rfm95_reset().
+	// Must be in Sleep mode first before the second call can change to FSK/OOK mode.
+	set_mode_sleep();
 	set_mode_sleep();
 
 	// Ideal bit rate is 16384 bps; this works out to 16385 bps.
