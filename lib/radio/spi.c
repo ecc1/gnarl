@@ -42,7 +42,7 @@ uint8_t read_register(uint8_t addr) {
 		.cmd	= addr,
 		.length = 8,  // bits
 	};
-	ESP_ERROR_CHECK(spi_device_polling_transmit(spi_dev, &t));
+	ESP_ERROR_CHECK(spi_device_transmit(spi_dev, &t));
 	return t.rx_data[0];
 }
 
@@ -53,7 +53,7 @@ void read_burst(uint8_t addr, uint8_t *buf, int count) {
 		.tx_buffer = buf,
 		.rx_buffer = buf,
 	};
-	ESP_ERROR_CHECK(spi_device_polling_transmit(spi_dev, &t));
+	ESP_ERROR_CHECK(spi_device_transmit(spi_dev, &t));
 }
 
 // Write register by sending the address with the write bit set,
@@ -65,7 +65,7 @@ void write_register(uint8_t addr, uint8_t value) {
 		.length = 8,  // bits
 	};
 	t.tx_data[0] = value;
-	ESP_ERROR_CHECK(spi_device_polling_transmit(spi_dev, &t));
+	ESP_ERROR_CHECK(spi_device_transmit(spi_dev, &t));
 }
 
 void write_burst(uint8_t addr, uint8_t *buf, int count) {
@@ -76,5 +76,5 @@ void write_burst(uint8_t addr, uint8_t *buf, int count) {
 		.rxlength  = 8,  // bits
 		.tx_buffer = buf,
 	};
-	ESP_ERROR_CHECK(spi_device_polling_transmit(spi_dev, &t));
+	ESP_ERROR_CHECK(spi_device_transmit(spi_dev, &t));
 }
