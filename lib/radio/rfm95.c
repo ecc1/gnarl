@@ -130,6 +130,9 @@ void rfm95_init() {
 	write_register(REG_SYNC_VALUE_2, 0x00);
 	write_register(REG_SYNC_VALUE_3, 0xFF);
 	write_register(REG_SYNC_VALUE_4, 0x00);
+
+	write_register(REG_PACKET_CONFIG_1, PACKET_FORMAT_FIXED);
+	write_register(REG_PACKET_CONFIG_2, PACKET_MODE);
 }
 
 static inline bool fifo_empty() {
