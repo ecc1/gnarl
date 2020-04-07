@@ -22,49 +22,47 @@ char *wifi_ip_address(void) {
 	return ip4addr_ntoa((const ip4_addr_t *)&ip_info.ip);
 }
 
-static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-	if (event_base == WIFI_EVENT) {
-		switch (event_id) {
-		case WIFI_EVENT_STA_START:
-			ESP_LOGD(TAG, "WIFI_EVENT STA_START");
-			esp_wifi_connect();
-			return;
-		case WIFI_EVENT_STA_CONNECTED:
-			ESP_LOGD(TAG, "WIFI_EVENT STA_CONNECTED");
-			return;
-		case WIFI_EVENT_STA_DISCONNECTED:
-			ESP_LOGD(TAG, "WIFI_EVENT STA_DISCONNECTED");
-			if (arg != 0) {
-				wifi_event_sta_disconnected_t *d = arg;
-				ESP_LOGD(TAG, "reason = %d", d->reason);
-			}
-			if (retry_num == MAX_RETRIES) {
-				ESP_LOGI(TAG, "failed to connect to %s after %d attempts", WIFI_SSID, MAX_RETRIES);
-				return;
-			}
-			retry_num++;
-			usleep(RETRY_INTERVAL);
-			esp_wifi_connect();
-			return;
-		default:
-			ESP_LOGD(TAG, "unexpected WIFI_EVENT %d", event_id);
+static void handle_wifi_event(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+	switch (event_id) {
+	case WIFI_EVENT_STA_START:
+		ESP_LOGD(TAG, "WIFI_EVENT STA_START");
+		esp_wifi_connect();
+		return;
+	case WIFI_EVENT_STA_CONNECTED:
+		ESP_LOGD(TAG, "WIFI_EVENT STA_CONNECTED");
+		return;
+	case WIFI_EVENT_STA_DISCONNECTED:
+		ESP_LOGD(TAG, "WIFI_EVENT STA_DISCONNECTED");
+		if (arg != 0) {
+			wifi_event_sta_disconnected_t *d = arg;
+			ESP_LOGD(TAG, "reason = %d", d->reason);
+		}
+		if (retry_num == MAX_RETRIES) {
+			ESP_LOGI(TAG, "failed to connect to %s after %d attempts", WIFI_SSID, MAX_RETRIES);
 			return;
 		}
+		retry_num++;
+		usleep(RETRY_INTERVAL);
+		esp_wifi_connect();
+		return;
+	default:
+		ESP_LOGD(TAG, "unexpected WIFI_EVENT %d", event_id);
+		return;
 	}
-	if (event_base == IP_EVENT) {
-		switch (event_id) {
-		case IP_EVENT_STA_GOT_IP:
-			ESP_LOGD(TAG, "IP_EVENT STA_GOT_IP");
-			retry_num = 0;
-			ip_info = ((ip_event_got_ip_t *)event_data)->ip_info;
-			xTaskNotify(waiting_task, 0, 0);
-			return;
-		default:
-			ESP_LOGD(TAG, "unexpected IP_EVENT %d", event_id);
-			return;
-		}
+}
+
+static void handle_ip_event(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+	switch (event_id) {
+	case IP_EVENT_STA_GOT_IP:
+		ESP_LOGD(TAG, "IP_EVENT STA_GOT_IP");
+		retry_num = 0;
+		ip_info = ((ip_event_got_ip_t *)event_data)->ip_info;
+		xTaskNotify(waiting_task, 0, 0);
+		return;
+	default:
+		ESP_LOGD(TAG, "unexpected IP_EVENT %d", event_id);
+		return;
 	}
-	ESP_LOGD(TAG, "unexpected event_base = %p", event_base);
 }
 
 void wifi_init(void) {
@@ -76,15 +74,15 @@ void wifi_init(void) {
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, handle_wifi_event, NULL));
+	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, handle_ip_event, NULL));
+	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
 	wifi_config_t wifi_config = {
 		.sta = {
 			.ssid = WIFI_SSID,
 			.password = WIFI_PASSWORD,
 		},
 	};
-	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
 	ESP_LOGI(TAG, "connecting to %s", WIFI_SSID);
 	ESP_ERROR_CHECK(esp_wifi_start());
