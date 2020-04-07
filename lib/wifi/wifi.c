@@ -12,25 +12,19 @@
 #define RETRY_INTERVAL		100000	// microseconds
 #define IP_TIMEOUT		10000	// milliseconds
 
+static esp_netif_t *wifi_interface;
 static int retry_num;
-
 static volatile TaskHandle_t waiting_task;
-
-static esp_netif_ip_info_t ip_info;
-
-char *wifi_ip_address(void) {
-	return ip4addr_ntoa((const ip4_addr_t *)&ip_info.ip);
-}
 
 static void handle_wifi_event(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
 	switch (event_id) {
 	case WIFI_EVENT_STA_START:
 		ESP_LOGD(TAG, "WIFI_EVENT STA_START");
 		esp_wifi_connect();
-		return;
+		break;
 	case WIFI_EVENT_STA_CONNECTED:
 		ESP_LOGD(TAG, "WIFI_EVENT STA_CONNECTED");
-		return;
+		break;
 	case WIFI_EVENT_STA_DISCONNECTED:
 		ESP_LOGD(TAG, "WIFI_EVENT STA_DISCONNECTED");
 		if (arg != 0) {
@@ -38,16 +32,13 @@ static void handle_wifi_event(void* arg, esp_event_base_t event_base, int32_t ev
 			ESP_LOGD(TAG, "reason = %d", d->reason);
 		}
 		if (retry_num == MAX_RETRIES) {
-			ESP_LOGI(TAG, "failed to connect to %s after %d attempts", WIFI_SSID, MAX_RETRIES);
+			ESP_LOGE(TAG, "failed to connect to %s after %d attempts", WIFI_SSID, MAX_RETRIES);
 			return;
 		}
 		retry_num++;
 		usleep(RETRY_INTERVAL);
 		esp_wifi_connect();
-		return;
-	default:
-		ESP_LOGD(TAG, "unexpected WIFI_EVENT %d", event_id);
-		return;
+		break;
 	}
 }
 
@@ -56,12 +47,13 @@ static void handle_ip_event(void* arg, esp_event_base_t event_base, int32_t even
 	case IP_EVENT_STA_GOT_IP:
 		ESP_LOGD(TAG, "IP_EVENT STA_GOT_IP");
 		retry_num = 0;
-		ip_info = ((ip_event_got_ip_t *)event_data)->ip_info;
-		xTaskNotify(waiting_task, 0, 0);
-		return;
+		if (waiting_task) {
+			xTaskNotify(waiting_task, 0, 0);
+		}
+		break;
 	default:
 		ESP_LOGD(TAG, "unexpected IP_EVENT %d", event_id);
-		return;
+		break;
 	}
 }
 
@@ -69,21 +61,21 @@ void wifi_init(void) {
 	ESP_ERROR_CHECK(esp_netif_init());
 
 	ESP_ERROR_CHECK(esp_event_loop_create_default());
-	esp_netif_create_default_wifi_sta();
+	wifi_interface = esp_netif_create_default_wifi_sta();
 
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+	wifi_init_config_t init_cfg = WIFI_INIT_CONFIG_DEFAULT();
+	ESP_ERROR_CHECK(esp_wifi_init(&init_cfg));
 
 	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, handle_wifi_event, NULL));
 	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, handle_ip_event, NULL));
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-	wifi_config_t wifi_config = {
+	wifi_config_t wifi_cfg = {
 		.sta = {
 			.ssid = WIFI_SSID,
 			.password = WIFI_PASSWORD,
 		},
 	};
-	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg));
 	ESP_LOGI(TAG, "connecting to %s", WIFI_SSID);
 	ESP_ERROR_CHECK(esp_wifi_start());
 
@@ -91,4 +83,10 @@ void wifi_init(void) {
 	if (!xTaskNotifyWait(0, 0, 0, pdMS_TO_TICKS(IP_TIMEOUT))) {
 		ESP_LOGE(TAG, "timeout waiting for IP address");
 	}
+}
+
+char *wifi_ip_address(void) {
+	esp_netif_ip_info_t ip_info;
+	ESP_ERROR_CHECK(esp_netif_get_ip_info(wifi_interface, &ip_info));
+	return ip4addr_ntoa((const ip4_addr_t *)&ip_info.ip);
 }
