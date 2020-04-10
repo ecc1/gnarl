@@ -1,0 +1,2 @@
+COMPONENT_ADD_INCLUDEDIRS = .
+COMPONENT_EMBED_TXTFILES := ../../include/root_cert.pem
