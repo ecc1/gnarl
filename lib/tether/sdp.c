@@ -5,7 +5,7 @@
 #include <btstack_config.h>
 #include <btstack.h>
 
-extern bd_addr_t remote_addr;
+bd_addr_t bt_tether_addr;
 
 static uint16_t bnep_l2cap_psm = 0;
 static uint32_t bnep_remote_uuid = 0;
@@ -85,7 +85,7 @@ static void handle_sdp_query_result(uint8_t packet_type, uint16_t channel, uint8
 			break;
 		}
 		ESP_LOGI(TAG, "discovered BNEP service");
-		bnep_connect(handle_bnep_packet, remote_addr, bnep_l2cap_psm, BLUETOOTH_SERVICE_CLASS_PANU, bnep_remote_uuid);
+		bnep_connect(handle_bnep_packet, bt_tether_addr, bnep_l2cap_psm, BLUETOOTH_SERVICE_CLASS_PANU, bnep_remote_uuid);
 		break;
 	}
 }
@@ -101,5 +101,5 @@ void handle_hci_startup_packet(uint8_t packet_type, uint16_t channel, uint8_t *p
 		return;
 	}
 	ESP_LOGI(TAG, "SDP query for remote PAN access point");
-	sdp_client_query_uuid16(handle_sdp_query_result, remote_addr, BLUETOOTH_SERVICE_CLASS_NAP);
+	sdp_client_query_uuid16(handle_sdp_query_result, bt_tether_addr, BLUETOOTH_SERVICE_CLASS_NAP);
 }

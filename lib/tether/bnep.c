@@ -5,12 +5,18 @@
 #include <btstack_config.h>
 #include <btstack.h>
 #include <btstack_run_loop_freertos.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <lwip/dhcp.h>
 #include <lwip/etharp.h>
+#include <lwip/ip_addr.h>
 #include <lwip/netif.h>
 #include <lwip/tcpip.h>
 #include <netif/ethernet.h>
 
-struct netif bnep_netif;
+#include "tether_config.h"
+
+static struct netif bnep_netif;
 
 static uint16_t bnep_cid;
 
@@ -153,7 +159,7 @@ static err_t bnep_netif_init(struct netif *netif) {
 	return ERR_OK;
 }
 
-void bnep_interface_init(void) {
+static void bnep_interface_init(void) {
 	tcpip_init(0, 0);
 
 	ip4_addr_t ipaddr, netmask, gw;
@@ -168,4 +174,88 @@ void bnep_interface_init(void) {
 
 	netif_add(&bnep_netif, &ipaddr, &netmask, &gw, 0, bnep_netif_init, ethernet_input);
 	netif_set_default(&bnep_netif);
+}
+
+static int dhcp_started = 0;
+
+static void link_callback(struct netif *netif) {
+	if (netif_is_link_up(netif) && !dhcp_started) {
+		dhcp_started = 1;
+		ESP_LOGD(TAG, "starting DHCP");
+		dhcp_start(netif);
+	}
+}
+
+static volatile int have_ip_address = 0;
+static char ip_addr_str[IP4ADDR_STRLEN_MAX];
+static char gw_addr_str[IP4ADDR_STRLEN_MAX];
+
+const char *tether_ip(void) {
+	return ip_addr_str;
+}
+
+const char *tether_gw(void) {
+	return gw_addr_str;
+}
+
+static void status_callback(struct netif *netif) {
+	struct ip4_addr *ip = &netif->ip_addr.u_addr.ip4;
+	if (ip->addr == 0) {
+		return;
+	}
+	ip4addr_ntoa_r(ip, ip_addr_str, sizeof(ip_addr_str));
+	ip = &netif->gw.u_addr.ip4;
+	ip4addr_ntoa_r(ip, gw_addr_str, sizeof(gw_addr_str));
+	have_ip_address = 1;
+}
+
+static void wait_for_dhcp(void) {
+	int n = 0;
+	while (!have_ip_address) {
+		link_callback(&bnep_netif);
+		status_callback(&bnep_netif);
+		if (n++ % 10 == 0) {
+			ESP_LOGD(TAG, "waiting for IP address");
+		}
+		vTaskDelay(pdMS_TO_TICKS(250));
+	}
+}
+
+void app_main_with_tethering(void);
+
+static void main_loop(void *unused) {
+	wait_for_dhcp();
+	ESP_LOGI(TAG, "IP address: %s", tether_ip());
+	ESP_LOGI(TAG, "Gateway:    %s", tether_gw());
+	app_main_with_tethering();
+	for (;;) {
+		vTaskDelay(pdMS_TO_TICKS(10000));
+	}
+}
+
+extern bd_addr_t bt_tether_addr;
+
+void handle_hci_startup_packet(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
+
+// See https://www.bluetooth.com/specifications/assigned-numbers/baseband/
+#define SERVICE_CLASS_NETWORKING	(1 << 17)
+#define DEVICE_CLASS_LAN_NAP		(3 << 8)
+
+void btstack_main() {
+	static btstack_packet_callback_registration_t hci_callback = {
+		.callback = handle_hci_startup_packet,
+	};
+	// Parse human-readable Bluetooth address.
+	sscanf_bd_addr(TETHER_ADDRESS, bt_tether_addr);
+	gap_discoverable_control(1);
+	gap_ssp_set_io_capability(SSP_IO_CAPABILITY_DISPLAY_YES_NO);
+	gap_set_local_name("ESP32 PAN Client");
+	gap_set_class_of_device(SERVICE_CLASS_NETWORKING | DEVICE_CLASS_LAN_NAP);
+	hci_add_event_handler(&hci_callback);
+	l2cap_init();
+	bnep_init();
+	sdp_init();
+	bnep_interface_init();
+	hci_power_control(HCI_POWER_ON);
+	xTaskCreate(main_loop, "main", 4096, 0, tskIDLE_PRIORITY + 16, 0);
 }
