@@ -2,7 +2,7 @@
 
 #include "nightscout.h"
 #include "nightscout_config.h"
-#include "timezone.h"
+#include "timezone_config.h"
 
 static void get_entries(void) {
 	setenv("TZ", TZ, 1);

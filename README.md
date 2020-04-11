@@ -188,7 +188,7 @@ The root certificate is the last one in the chain.
 
 ### Time zone configuration
 
-The local time zone must be hard-coded in the `include/timezone.h` file.
+The local time zone must be hard-coded in the `include/timezone_config.h` file.
 For example:
 
     #define TZ	"EST5EDT,M3.2.0,M11.1.0"
