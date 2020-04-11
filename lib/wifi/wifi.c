@@ -2,14 +2,16 @@
 #define LOG_LOCAL_LEVEL	ESP_LOG_DEBUG
 #include <esp_log.h>
 #include <esp_event.h>
+#include <esp_netif.h>
 #include <esp_wifi.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <nvs_flash.h>
 
 #include "wifi.h"
 
 #define MAX_RETRIES  		5
-#define RETRY_INTERVAL		100000	// microseconds
+#define RETRY_INTERVAL		100	// milliseconds
 #define IP_TIMEOUT		10000	// milliseconds
 
 static esp_netif_t *wifi_interface;
@@ -36,7 +38,7 @@ static void handle_wifi_event(void* arg, esp_event_base_t event_base, int32_t ev
 			return;
 		}
 		retry_num++;
-		usleep(RETRY_INTERVAL);
+		vTaskDelay(pdMS_TO_TICKS(RETRY_INTERVAL));
 		esp_wifi_connect();
 		break;
 	}
@@ -58,6 +60,7 @@ static void handle_ip_event(void* arg, esp_event_base_t event_base, int32_t even
 }
 
 void wifi_init(void) {
+	ESP_ERROR_CHECK(nvs_flash_init());
 	ESP_ERROR_CHECK(esp_netif_init());
 
 	ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -86,7 +89,9 @@ void wifi_init(void) {
 }
 
 char *wifi_ip_address(void) {
+	static char addr[20];
 	esp_netif_ip_info_t ip_info;
 	ESP_ERROR_CHECK(esp_netif_get_ip_info(wifi_interface, &ip_info));
-	return ip4addr_ntoa((const ip4_addr_t *)&ip_info.ip);
+	esp_ip4addr_ntoa(&ip_info.ip, addr, sizeof(addr));
+	return addr;
 }
