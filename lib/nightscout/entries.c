@@ -43,6 +43,10 @@ static void do_entry(const cJSON *e, nightscout_entry_callback_t cb) {
 }
 
 void process_nightscout_entries(const char *json, nightscout_entry_callback_t callback) {
+	if (!json) {
+		ESP_LOGE(TAG, "no response");
+		return;
+	}
 	cJSON *root = cJSON_Parse(json);
 	if (!root || !cJSON_IsArray(root)) {
 		ESP_LOGE(TAG, "response \"%s\" is not a JSON array", json);
