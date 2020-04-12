@@ -6,7 +6,7 @@
 char *http_get(esp_http_client_handle_t client) {
 	esp_err_t err = esp_http_client_open(client, 0);
 	if (err != ESP_OK) {
-		ESP_LOGE(TAG, "esp_http_client_open returned %d", err);
+		ESP_LOGE(TAG, "http_get: %s", esp_err_to_name(err));
 		return 0;
 	}
 	int content_length = esp_http_client_fetch_headers(client);

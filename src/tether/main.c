@@ -17,7 +17,7 @@ static char *http_get(const char *url) {
 	esp_http_client_handle_t client = esp_http_client_init(&config);
 	esp_err_t err = esp_http_client_open(client, 0);
 	if (err != ESP_OK) {
-		printf("cannot create HTTP client connection to %s\n", url);
+		printf("HTTP client connection to %s failed: %s\n", url, esp_err_to_name(err));
 		return 0;
 	}
 	int content_length = esp_http_client_fetch_headers(client);
