@@ -1,4 +1,4 @@
-void tether_init(void);
+const char *ip_address(void);
+const char *gateway_address(void);
 
-const char *tether_ip(void);
-const char *tether_gw(void);
+#define app_main	app_main_with_tethering

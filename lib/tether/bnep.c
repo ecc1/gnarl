@@ -1,5 +1,5 @@
 #define TAG		"BNEP"
-#define LOG_LOCAL_LEVEL	ESP_LOG_INFO
+#define LOG_LOCAL_LEVEL	ESP_LOG_DEBUG
 #include <esp_log.h>
 
 #include <btstack_config.h>
@@ -190,11 +190,11 @@ static volatile int have_ip_address = 0;
 static char ip_addr_str[IP4ADDR_STRLEN_MAX];
 static char gw_addr_str[IP4ADDR_STRLEN_MAX];
 
-const char *tether_ip(void) {
+const char *ip_address(void) {
 	return ip_addr_str;
 }
 
-const char *tether_gw(void) {
+const char *gateway_address(void) {
 	return gw_addr_str;
 }
 
@@ -225,12 +225,11 @@ void app_main_with_tethering(void);
 
 static void main_loop(void *unused) {
 	wait_for_dhcp();
-	ESP_LOGI(TAG, "IP address: %s", tether_ip());
-	ESP_LOGI(TAG, "Gateway:    %s", tether_gw());
+	ESP_LOGI(TAG, "IP address: %s", ip_address());
+	ESP_LOGI(TAG, "Gateway:    %s", gateway_address());
 	app_main_with_tethering();
-	for (;;) {
-		vTaskDelay(pdMS_TO_TICKS(10000));
-	}
+	ESP_LOGD(TAG, "Return from main application function");
+	vTaskDelete(0);
 }
 
 extern bd_addr_t bt_tether_addr;

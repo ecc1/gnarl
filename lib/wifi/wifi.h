@@ -1,5 +1,3 @@
-#include "wifi_config.h"
+char *ip_address(void);
 
-void wifi_init(void);
-
-char *wifi_ip_address(void);
+#define app_main	app_main_with_wifi

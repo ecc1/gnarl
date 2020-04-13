@@ -2,14 +2,16 @@
 #include <lwip/ip_addr.h>
 #include <lwip/netdb.h>
 
+#include "tether.h"
+
 static void lookup_host(const char *hostname) {
 	struct hostent *he = gethostbyname(hostname);
 	if (!he) {
 		printf("host %s not found\n", hostname);
 		return;
 	}
-	char *addr = he->h_addr_list[0];
-	printf("%s has address %s\n", hostname, ip4addr_ntoa((ip4_addr_t *)addr));
+	char *addr = ip4addr_ntoa((ip4_addr_t *)he->h_addr_list[0]);
+	printf("%s has address %s\n", hostname, addr);
 }
 
 static char *http_get(const char *url) {
@@ -45,7 +47,9 @@ static char *http_get(const char *url) {
 	return err == ESP_OK ? response : 0;
 }
 
-void app_main_with_tethering(void) {
+void app_main(void) {
+	printf("IP address: %s\n", ip_address());
+	printf("Gateway:    %s\n", gateway_address());
 	lookup_host("google.com");
 	char *resp = http_get("http://postman-echo.com/get?alpha=xyz&beta=1000&gamma=true");
 	puts(resp ? resp : "(no response)");

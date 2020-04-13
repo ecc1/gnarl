@@ -1,5 +1,5 @@
 #define TAG		"WiFi"
-#define LOG_LOCAL_LEVEL	ESP_LOG_DEBUG
+
 #include <esp_log.h>
 #include <esp_event.h>
 #include <esp_netif.h>
@@ -8,7 +8,7 @@
 #include <freertos/task.h>
 #include <nvs_flash.h>
 
-#include "wifi.h"
+#include "wifi_config.h"
 
 #define MAX_RETRIES  		5
 #define RETRY_INTERVAL		100	// milliseconds
@@ -59,7 +59,7 @@ static void handle_ip_event(void* arg, esp_event_base_t event_base, int32_t even
 	}
 }
 
-void wifi_init(void) {
+static void wifi_init(void) {
 	ESP_ERROR_CHECK(nvs_flash_init());
 	ESP_ERROR_CHECK(esp_netif_init());
 
@@ -88,10 +88,19 @@ void wifi_init(void) {
 	}
 }
 
-char *wifi_ip_address(void) {
+char *ip_address(void) {
 	static char addr[20];
 	esp_netif_ip_info_t ip_info;
 	ESP_ERROR_CHECK(esp_netif_get_ip_info(wifi_interface, &ip_info));
 	esp_ip4addr_ntoa(&ip_info.ip, addr, sizeof(addr));
 	return addr;
+}
+
+void app_main_with_wifi(void);
+
+void app_main(void) {
+	wifi_init();
+	ESP_LOGI(TAG, "IP address: %s", ip_address());
+	app_main_with_wifi();
+	ESP_LOGD(TAG, "Return from main application function");
 }
