@@ -17,7 +17,6 @@ esp_http_client_handle_t nightscout_client_handle(void) {
 	esp_http_client_config_t config = {
 		.url = NIGHTSCOUT_URL,
 		.cert_pem = root_cert_pem_start,
-		.timeout_ms = 10000,
 	};
 	return esp_http_client_init(&config);
 }
