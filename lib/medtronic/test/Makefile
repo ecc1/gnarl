@@ -1,26 +1,20 @@
-programs = decode_time time_test read_history history_test schedule_test
-test_programs = $(filter %_test,$(programs))
+test_programs = history_test schedule_test time_test
+other_programs = decode_time read_history
+
+programs = $(test_programs) $(other_programs)
 
 all: $(programs)
 
 .PHONY: all clean test
 
-headers = testing.h ../medtronic.h ../pump_history.h
-
 CFLAGS += -Wall -isystem . -I .. -g
 LDFLAGS += -ljansson
 
-$(programs): %: %.o common.o history.o json.o schedule.o stringer.o
+$(test_programs): %: %.c common.c json.c stringer.c ../history.c ../schedule.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-%.o: %.c $(headers)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-history.o: ../history.c $(headers)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-schedule.o: ../schedule.c $(headers)
-	$(CC) $(CFLAGS) -c -o $@ $<
+$(other_programs): %: %.c common.c stringer.c ../history.c ../schedule.c
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 test: $(test_programs)
 	@for prog in $(test_programs) ; do \
