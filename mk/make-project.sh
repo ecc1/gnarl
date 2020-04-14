@@ -13,14 +13,17 @@ if [ ! -d "$src" ]; then
     exit 1
 fi
 
-# project/build directory will be owned by root if using docker
-if [ -d project/build ] && [ $(stat --format=%U project/build) = root ]; then
-    sudo rm -fr project/build
-fi
-rm -fr project
-
-mkdir project
+mkdir -p project
 cd project
+rm -fr CMakeLists.txt component.mk components dependencies include main Makefile partitions.csv sdkconfig
+if [ -d build ]; then
+    # build directory will be owned by root if using docker
+    if [ $(stat --format=%U build) = root ]; then
+	sudo rm -fr build
+    else
+	rm -fr build
+    fi
+fi
 
 cp -a ../$src main
 mv main/sdkconfig .
@@ -35,9 +38,7 @@ cp -a ../include .
 sed "s/xyzzy/$project/" < ../mk/Makefile > Makefile
 sed "s/xyzzy/$project/" < ../mk/CMakeLists.project > CMakeLists.txt
 cp ../mk/partitions.csv .
-
-cd main
-[ -f component.mk ] || cp ../../mk/component.mk component.mk
-[ -f CMakeLists.txt ] || cp ../../mk/CMakeLists.main CMakeLists.txt
+cp ../mk/CMakeLists.main main/CMakeLists.txt
+cp ../mk/component.mk main/component.mk
 
 echo The $project project has been set up in the '"project"' subdirectory.
