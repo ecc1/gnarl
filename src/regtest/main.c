@@ -4,7 +4,7 @@
 #include "rfm95.h"
 #include "spi.h"
 
-void read_regs() {
+void read_regs(void) {
 	uint8_t x = read_register(REG_SYNC_VALUE_1);
 	uint8_t y = read_register(REG_SYNC_VALUE_2);
 	uint8_t z = read_register(REG_SYNC_VALUE_3);
@@ -14,7 +14,7 @@ void read_regs() {
 	printf(" burst: %02X %02X %02X\n", data[0], data[1], data[2]);
 }
 
-void app_main() {
+void app_main(void) {
 	spi_init();
 
 	for (uint8_t addr = 0; addr <= 0x50; addr++) {

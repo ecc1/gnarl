@@ -61,7 +61,7 @@ static const struct ble_gatt_svc_def service_list[] = {
 	{}, // End of service list.
 };
 
-static void server_init() {
+static void server_init(void) {
 	int err;
 	char buf[40];
 
@@ -112,7 +112,7 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 	return 0;
 }
 
-static void advertise() {
+static void advertise(void) {
 	struct ble_hs_adv_fields fields;
 	memset(&fields, 0, sizeof(fields));
 
@@ -145,7 +145,7 @@ static void advertise() {
 	printf("advertising started\n");
 }
 
-static void sync_callback() {
+static void sync_callback(void) {
 	int err;
 
 	err = ble_hs_util_ensure_addr(0);
@@ -190,7 +190,7 @@ static int read_cpf_dsc(uint16_t conn_handle, uint16_t attr_handle, struct ble_g
 	return 0;
 }
 
-void app_main() {
+void app_main(void) {
 	esp_err_t ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
 		ESP_ERROR_CHECK(nvs_flash_erase());

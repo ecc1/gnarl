@@ -6,7 +6,7 @@
 
 #define MILLISECONDS 1000
 
-void app_main() {
+void app_main(void) {
 	gpio_set_direction(LED, GPIO_MODE_OUTPUT);
 	int on_off = 0;
 	for (;;) {

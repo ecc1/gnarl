@@ -7,7 +7,7 @@
 
 #include "module.h"
 
-static void print_wakeup_reason() {
+static void print_wakeup_reason(void) {
 	esp_sleep_wakeup_cause_t r = esp_sleep_get_wakeup_cause();
 	const char *reason;
 	switch(r) {
@@ -33,7 +33,7 @@ static void print_wakeup_reason() {
 	printf("wakeup reason: %s\n", reason);
 }
 
-void app_main() {
+void app_main(void) {
 	gpio_set_direction(LED, GPIO_MODE_OUTPUT);
 	gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
 	esp_sleep_enable_ext0_wakeup(BUTTON, 0);

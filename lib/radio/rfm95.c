@@ -14,7 +14,7 @@
 
 #define MILLISECONDS	1000
 
-static inline uint8_t read_mode() {
+static inline uint8_t read_mode(void) {
 	return read_register(REG_OP_MODE) & OP_MODE_MASK;
 }
 
@@ -39,27 +39,27 @@ static void set_mode(uint8_t mode) {
 	ESP_LOGI(TAG, "set_mode(%d) timeout in mode %d", mode, cur_mode);
 }
 
-static inline void set_mode_sleep() {
+static inline void set_mode_sleep(void) {
 	set_mode(MODE_SLEEP);
 }
 
-static inline void set_mode_standby() {
+static inline void set_mode_standby(void) {
 	set_mode(MODE_STDBY);
 }
 
-static inline void set_mode_receive() {
+static inline void set_mode_receive(void) {
 	set_mode(MODE_RX);
 }
 
-static inline void set_mode_transmit() {
+static inline void set_mode_transmit(void) {
 	set_mode(MODE_TX);
 }
 
-static inline void sequencer_stop() {
+static inline void sequencer_stop(void) {
 	write_register(REG_SEQ_CONFIG_1, SEQUENCER_STOP);
 }
 
-void rfm95_reset() {
+void rfm95_reset(void) {
 	ESP_LOGD(TAG, "reset");
 	gpio_set_direction(LORA_RST, GPIO_MODE_OUTPUT);
 	gpio_set_level(LORA_RST, 0);
@@ -70,26 +70,26 @@ void rfm95_reset() {
 
 static volatile int rx_packets;
 
-int rx_packet_count() {
+int rx_packet_count(void) {
 	return rx_packets;
 }
 
 static volatile int tx_packets;
 
-int tx_packet_count() {
+int tx_packet_count(void) {
 	return tx_packets;
 }
 
 static volatile TaskHandle_t rx_waiting_task;
 
-static void IRAM_ATTR rx_interrupt() {
+static void IRAM_ATTR rx_interrupt(void *unused) {
 	rx_packets++;
 	if (rx_waiting_task != 0) {
 		vTaskNotifyGiveFromISR(rx_waiting_task, 0);
 	}
 }
 
-void rfm95_init() {
+void rfm95_init(void) {
 	spi_init();
 	rfm95_reset();
 
@@ -135,19 +135,19 @@ void rfm95_init() {
 	write_register(REG_PACKET_CONFIG_2, PACKET_MODE);
 }
 
-static inline bool fifo_empty() {
+static inline bool fifo_empty(void) {
 	return (read_register(REG_IRQ_FLAGS_2) & FIFO_EMPTY) != 0;
 }
 
-static inline bool fifo_full() {
+static inline bool fifo_full(void) {
 	return (read_register(REG_IRQ_FLAGS_2) & FIFO_FULL) != 0;
 }
 
-static inline void clear_fifo() {
+static inline void clear_fifo(void) {
 	write_register(REG_IRQ_FLAGS_2, FIFO_OVERRUN);
 }
 
-static inline uint8_t read_fifo_flags() {
+static inline uint8_t read_fifo_flags(void) {
 	return read_register(REG_IRQ_FLAGS_2);
 }
 
@@ -159,7 +159,7 @@ static inline void xmit(uint8_t* data, int len) {
 	write_burst(REG_FIFO, data, len);
 }
 
-static bool wait_for_fifo_non_empty() {
+static bool wait_for_fifo_non_empty(void) {
 	for (int w = 0; w < MAX_WAIT; w++) {
 		if (!fifo_full()) {
 			return true;
@@ -171,7 +171,7 @@ static bool wait_for_fifo_non_empty() {
 	return false;
 }
 
-static void wait_for_transmit_done() {
+static void wait_for_transmit_done(void) {
 	uint8_t mode;
 	for (int w = 0; w < MAX_WAIT; w++) {
 		mode = read_mode();
@@ -219,7 +219,7 @@ void transmit(uint8_t *buf, int count) {
 	tx_packets++;
 }
 
-static bool packet_seen() {
+static bool packet_seen(void) {
 	bool seen = (read_register(REG_IRQ_FLAGS_1) & SYNC_ADDRESS_MATCH) != 0;
 	if (seen) {
 		ESP_LOGD(TAG, "incoming packet seen");
@@ -227,13 +227,13 @@ static bool packet_seen() {
 	return seen;
 }
 
-static inline uint8_t recv_byte() {
+static inline uint8_t recv_byte(void) {
 	return read_register(REG_FIFO);
 }
 
 static uint8_t last_rssi = 0xFF;
 
-int read_rssi() {
+int read_rssi(void) {
 	return -(int)last_rssi / 2;
 }
 
@@ -329,7 +329,7 @@ int receive(uint8_t *buf, int count, int timeout) {
 	return rx_common(wait_until_interrupt, buf, count, timeout);
 }
 
-uint32_t read_frequency() {
+uint32_t read_frequency(void) {
 	uint8_t frf[3];
 	read_burst(REG_FRF_MSB, frf, sizeof(frf));
 	uint32_t f = (frf[0] << 16) | (frf[1] << 8) | frf[2];
@@ -345,7 +345,7 @@ void set_frequency(uint32_t freq_hz) {
 	write_burst(REG_FRF_MSB, frf, sizeof(frf));
 }
 
-int read_version() {
+int read_version(void) {
 	return read_register(REG_VERSION);
 }
 

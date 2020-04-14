@@ -10,7 +10,7 @@ static i2c_cmd_handle_t handle_i2c;
 #define I2C_MASTER_FREQ_HZ      400000
 #define I2C_TIMEOUT_MS		1000
 
-static void oled_i2c_init() {
+static void oled_i2c_init(void) {
 	i2c_config_t conf = {
 		.mode		  = I2C_MODE_MASTER,
 		.sda_io_num	  = OLED_SDA,
@@ -55,7 +55,7 @@ uint8_t i2c_callback(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr) 
 	return 1;
 }
 
-static void oled_gpio_init() {
+static void oled_gpio_init(void) {
 	gpio_config_t conf = {
 		.pin_bit_mask = 1 << OLED_RST,
 		.mode         = GPIO_MODE_OUTPUT,

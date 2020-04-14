@@ -9,7 +9,7 @@
 
 #define PUMP_FREQUENCY 916600000
 
-void app_main() {
+void app_main(void) {
 	ESP_LOGI(TAG, "%s", SUBG_RFSPY_VERSION);
 	rfm95_init();
 	uint8_t v = read_version();

@@ -106,7 +106,7 @@ static const struct ble_gatt_svc_def service_list[] = {
 	{}, // End of service list.
 };
 
-static void server_init() {
+static void server_init(void) {
 	int err;
 	char u[60];
 
@@ -130,7 +130,7 @@ static void server_init() {
 	ESP_ERROR_CHECK(esp_timer_start_periodic(t, 60*SECONDS));
 }
 
-static void advertise() {
+static void advertise(void) {
 	struct ble_hs_adv_fields fields;
 	memset(&fields, 0, sizeof(fields));
 
@@ -209,7 +209,7 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 	return 0;
 }
 
-static void sync_callback() {
+static void sync_callback(void) {
 	int err;
 
 	err = ble_hs_util_ensure_addr(0);
@@ -236,7 +236,7 @@ static uint16_t data_in_len;
 static uint8_t data_out[MAX_DATA];
 static uint16_t data_out_len;
 
-static void response_notify() {
+static void response_notify(void) {
 	response_count++;
 	if (!response_count_notify_state) {
 		ESP_LOGD(TAG, "not notifying for response count %d", response_count);
@@ -382,7 +382,7 @@ static void host_task(void *arg) {
 	nimble_port_run();
 }
 
-void gnarl_init() {
+void gnarl_init(void) {
 	start_gnarl_task();
 
 	esp_err_t ret = nvs_flash_init();

@@ -19,7 +19,7 @@ static inline glucose_t int_to_glucose(int n, glucose_units_t units) {
 
 static int cached_pump_family;
 
-int pump_family() {
+int pump_family(void) {
 	if (cached_pump_family == 0) {
 		pump_model();
 	}
@@ -43,7 +43,7 @@ int pump_basal_rates(basal_rate_t *r, int max) {
 	return count;
 }
 
-int pump_battery() {
+int pump_battery(void) {
 	int n;
 	uint8_t *data = short_command(CMD_BATTERY, &n);
 	if (!data || n < 4 || data[0] != 3) {
@@ -101,7 +101,7 @@ int pump_carb_ratios(carb_ratio_t *r, int max) {
 	return count;
 }
 
-carb_units_t pump_carb_units() {
+carb_units_t pump_carb_units(void) {
 	int n;
 	uint8_t *data = short_command(CMD_CARB_UNITS, &n);
 	if (!data || n < 2 || data[0] != 1) {
@@ -110,7 +110,7 @@ carb_units_t pump_carb_units() {
 	return data[1];
 }
 
-time_t pump_clock() {
+time_t pump_clock(void) {
 	int n;
 	uint8_t *data = short_command(CMD_CLOCK, &n);
 	if (!data || n < 8 || data[0] != 7) {
@@ -128,7 +128,7 @@ time_t pump_clock() {
 	return mktime(&tm);
 }
 
-glucose_units_t pump_glucose_units() {
+glucose_units_t pump_glucose_units(void) {
 	int n;
 	uint8_t *data = short_command(CMD_GLUCOSE_UNITS, &n);
 	if (!data || n < 2 || data[0] != 1) {
@@ -147,7 +147,7 @@ uint8_t *pump_history_page(int page_num) {
 	return data;
 }
 
-int pump_model() {
+int pump_model(void) {
 	int n;
 	uint8_t *data = short_command(CMD_MODEL, &n);
 	if (!data || n < 2) {
@@ -165,7 +165,7 @@ int pump_model() {
 	return model;
 }
 
-int pump_reservoir() {
+int pump_reservoir(void) {
 	// Call this before the main command so the response buffer isn't overwritten.
 	int fam = pump_family();
 	int n;

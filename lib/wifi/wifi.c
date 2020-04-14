@@ -18,7 +18,7 @@ static volatile TaskHandle_t waiting_task;
 
 static esp_netif_ip_info_t ip_info;
 
-char *wifi_ip_address() {
+char *wifi_ip_address(void) {
 	return ip4addr_ntoa((const ip4_addr_t *)&ip_info.ip);
 }
 

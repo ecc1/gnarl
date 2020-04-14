@@ -116,6 +116,6 @@ void test_failed(const char *format, ...) {
 	va_end(ap);
 }
 
-void exit_test() {
+void exit_test(void) {
 	exit(test_failures);
 }

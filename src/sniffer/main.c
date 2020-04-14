@@ -11,7 +11,7 @@
 
 uint8_t rx_buf[256];
 
-void app_main() {
+void app_main(void) {
 	rfm95_init();
 	uint8_t v = read_version();
 	printf("radio version %d.%d\n", version_major(v), version_minor(v));

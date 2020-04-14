@@ -98,7 +98,7 @@ static void update(display_command_t cmd) {
 	oled_off();
 }
 
-static void display_loop() {
+static void display_loop(void *unused) {
 	for (;;) {
 		display_command_t cmd;
 		if (!xQueueReceive(display_queue, &cmd, pdMS_TO_TICKS(100))) {
@@ -109,7 +109,7 @@ static void display_loop() {
 	}
 }
 
-static void button_interrupt() {
+static void button_interrupt(void *unused) {
 	display_command_t cmd = { .op = SHOW_STATUS };
 	xQueueSendFromISR(display_queue, &cmd, 0);
 }

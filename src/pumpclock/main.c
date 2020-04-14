@@ -11,7 +11,7 @@
 
 time_t pump_time;
 
-void get_time() {
+void get_time(void) {
 	printf("waking pump %s\n", PUMP_ID);
 	if (!pump_wakeup()) {
 		printf("pump_wakeup() failed\n");
@@ -28,7 +28,7 @@ void get_time() {
 
 char str[100];
 
-void display_info() {
+void display_info(void) {
 	time_t t = time(0);
 	struct tm *tm = localtime(&t);
 	oled_clear();
@@ -42,7 +42,7 @@ void display_info() {
 	oled_update();
 }
 
-void splash() {
+void splash(void) {
 	oled_on();
 	oled_font_large();
 	oled_align_center();
@@ -52,7 +52,7 @@ void splash() {
 
 #define SECONDS		1000000
 
-void app_main() {
+void app_main(void) {
 	oled_init();
 	splash();
 	pump_set_id(PUMP_ID);

@@ -13,7 +13,7 @@ int reservoir_level;
 int battery_level;
 int model;
 
-void get_pump_info() {
+void get_pump_info(void) {
 	printf("waking pump %s\n", PUMP_ID);
 	if (!pump_wakeup()) {
 		printf("wakeup failed\n");
@@ -35,7 +35,7 @@ char str[100];
 #define FP1(n)	(n)/1000, ((n)%1000)/100
 #define FP2(n)	(n)/1000, ((n)%1000)/10
 
-void display_info() {
+void display_info(void) {
 	oled_clear();
 	oled_font_medium();
 	if (model == -1) {
@@ -55,7 +55,7 @@ void display_info() {
 	oled_update();
 }
 
-void splash() {
+void splash(void) {
 	oled_on();
 	oled_font_large();
 	oled_align_center();
@@ -66,7 +66,7 @@ void splash() {
 #define SECONDS		1000000
 #define DISPLAY_TIMEOUT	(10*SECONDS)
 
-void app_main() {
+void app_main(void) {
 	oled_init();
 	splash();
 	pump_set_id(PUMP_ID);

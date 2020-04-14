@@ -71,14 +71,14 @@ void_fn_t font_style[] = {
 };
 #define NUM_STYLES	(sizeof(font_style)/sizeof(font_style[0]))
 
-void display() {
+void display(void) {
 	oled_clear();
 	draw_text(lorem_ipsum);
 	oled_update();
 	sleep(2);
 }
 
-void app_main() {
+void app_main(void) {
 	oled_init();
 	for (;;) {
 		for (int i = 0; i < NUM_SIZES; i++) {

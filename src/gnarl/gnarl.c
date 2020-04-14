@@ -208,7 +208,7 @@ static inline bool valid_frequency(uint32_t f) {
 }
 
 // Change the radio frequency if the current register values make sense.
-static void check_frequency() {
+static void check_frequency(void) {
 	uint32_t f = ((uint32_t)fr[0] << 16) + ((uint32_t)fr[1] << 8) + ((uint32_t)fr[2]);
 	uint32_t freq = (uint32_t)(((uint64_t)f * 24*MHz) >> 16);
 	if (valid_frequency(freq)) {
@@ -292,7 +292,7 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	ESP_LOGD(TAG, "rfspy_command %d, queue length %d", cmd, uxQueueMessagesWaiting(request_queue));
 }
 
-static void gnarl_loop() {
+static void gnarl_loop(void *unused) {
 	ESP_LOGD(TAG, "starting gnarl_loop");
 	const int timeout_ms = 60*MILLISECONDS;
 	for (;;) {
@@ -347,7 +347,7 @@ static void gnarl_loop() {
 	}
 }
 
-void start_gnarl_task() {
+void start_gnarl_task(void) {
 	request_queue = xQueueCreate(QUEUE_LENGTH, sizeof(rfspy_request_t));
 	// Start radio task with high priority to avoid receiving truncated packets.
 	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, tskIDLE_PRIORITY + 24, 0);

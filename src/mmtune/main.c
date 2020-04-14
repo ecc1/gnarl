@@ -26,7 +26,7 @@ int try_frequency(uint32_t frequency) {
 	return rssi;
 }
 
-void splash() {
+void splash(void) {
 	oled_on();
 	oled_font_large();
 	oled_align_center();
@@ -49,7 +49,7 @@ void draw_freq_bar(uint32_t freq, int rssi) {
 
 char str[100];
 
-void app_main() {
+void app_main(void) {
 	rfm95_init();
 	uint8_t v = read_version();
 	printf("radio version %d.%d\n", version_major(v), version_minor(v));
