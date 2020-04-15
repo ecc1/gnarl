@@ -7,8 +7,8 @@ all: $(programs)
 
 .PHONY: all clean test
 
-CFLAGS += -Wall -isystem . -I .. -g
-LDFLAGS += -ljansson
+CFLAGS += -Wall -I . -I .. -I /usr/include/cjson
+LDFLAGS += -lcjson
 
 $(test_programs): %: %.c common.c json.c stringer.c ../history.c ../schedule.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)

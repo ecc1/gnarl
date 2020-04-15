@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,3 +24,5 @@ void compare_with_json(char *filename);
 
 void test_failed(const char *format, ...);
 void exit_test(void);
+
+char *read_file(const char *name);
