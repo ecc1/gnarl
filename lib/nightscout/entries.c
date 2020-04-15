@@ -1,3 +1,4 @@
+#include <math.h>
 #include <string.h>
 #include <time.h>
 
@@ -8,6 +9,14 @@
 #include <cJSON.h>
 
 #include "nightscout.h"
+
+struct timeval timeval_from_milliseconds(double ms) {
+	struct timeval tv = {
+		.tv_sec = ms / 1000,
+		.tv_usec = fmod(ms, 1000) * 1000,
+	};
+	return tv;
+}
 
 static void do_entry(const cJSON *e, nightscout_entry_callback_t cb) {
 	const cJSON *item = cJSON_GetObjectItem(e, "type");
@@ -26,7 +35,7 @@ static void do_entry(const cJSON *e, nightscout_entry_callback_t cb) {
 		ESP_LOGE(TAG, "JSON entry has no date field");
 		return;
 	}
-	time_t t = (time_t)(item->valuedouble / 1000);
+	struct timeval tv = timeval_from_milliseconds(item->valuedouble);
 
 	item = cJSON_GetObjectItem(e, "sgv");
 	if (!item) {
@@ -36,7 +45,7 @@ static void do_entry(const cJSON *e, nightscout_entry_callback_t cb) {
 	int sgv = item->valueint;
 
 	nightscout_entry_t entry = {
-		.time = t,
+		.tv = tv,
 		.sgv = sgv,
 	};
 	cb(&entry);
@@ -61,7 +70,7 @@ void process_nightscout_entries(const char *json, nightscout_entry_callback_t ca
 }
 
 void print_nightscout_entry(const nightscout_entry_t *e) {
-	struct tm *tm = localtime(&e->time);
+	struct tm *tm = localtime(&e->tv.tv_sec);
 	static char buf[20];
 	strftime(buf, sizeof(buf), "%F %T", tm);
 	printf("%s  %3d\n", buf, e->sgv);
