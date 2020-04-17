@@ -135,8 +135,10 @@ void rfm95_init(void) {
 	write_register(REG_SYNC_VALUE_3, 0xFF);
 	write_register(REG_SYNC_VALUE_4, 0x00);
 
+	// Use unlimited length packet format (data sheet section 4.2.13.2).
 	write_register(REG_PACKET_CONFIG_1, PACKET_FORMAT_FIXED);
-	write_register(REG_PACKET_CONFIG_2, PACKET_MODE);
+	write_register(REG_PAYLOAD_LENGTH, 0);
+	write_register(REG_PACKET_CONFIG_2, PACKET_MODE| 0);
 }
 
 static inline bool fifo_empty(void) {
@@ -195,18 +197,13 @@ void transmit(uint8_t *buf, int count) {
 	clear_fifo();
 	// Automatically enter Transmit state on FifoLevel interrupt.
 	write_register(REG_FIFO_THRESH, TX_START_CONDITION);
-	write_register(REG_SEQ_CONFIG_1,
-		       SEQUENCER_START |
-		       IDLE_MODE_SLEEP |
-		       FROM_START_TO_TX_ON_FIFO_LEVEL |
-		       LOW_POWER_SELECT_OFF |
-		       FROM_TX_TO_LOW_POWER);
+	write_register(REG_SEQ_CONFIG_1, SEQUENCER_START | IDLE_MODE_SLEEP | FROM_START_TO_TX_ON_FIFO_LEVEL);
 	// Specify fixed length packet format (including final zero byte)
 	// so PacketSent interrupt will terminate Transmit state.
 	write_register(REG_PACKET_CONFIG_1, PACKET_FORMAT_FIXED);
+	write_register(REG_PAYLOAD_LENGTH, (count + 1) & 0xFF);
 	uint8_t length_msb = ((count + 1) >> 8) & PAYLOAD_LENGTH_MSB_MASK;
 	write_register(REG_PACKET_CONFIG_2, PACKET_MODE | length_msb);
-	write_register(REG_PAYLOAD_LENGTH, (count + 1) & 0xFF);
 	int n = count < FIFO_SIZE ? count : FIFO_SIZE;
 	xmit(buf, n);
 	ESP_LOGD(TAG, "after xmit: mode = %d", read_mode());
@@ -247,6 +244,7 @@ static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 	// Use unlimited length packet format (data sheet section 4.2.13.2).
 	write_register(REG_PACKET_CONFIG_1, PACKET_FORMAT_FIXED);
 	write_register(REG_PAYLOAD_LENGTH, 0);
+	write_register(REG_PACKET_CONFIG_2, PACKET_MODE| 0);
 	gpio_intr_enable(DIO2);
 	ESP_LOGD(TAG, "starting receive");
 	set_mode_receive();
