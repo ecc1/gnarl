@@ -130,6 +130,7 @@
 #define DIO1_MAPPING_SHIFT	4
 #define DIO2_MAPPING_SHIFT	2
 
+void rfm95_reset(void);
 
 void rfm95_init(void);
 

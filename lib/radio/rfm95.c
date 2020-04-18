@@ -59,12 +59,16 @@ static inline void sequencer_stop(void) {
 	write_register(REG_SEQ_CONFIG_1, SEQUENCER_STOP);
 }
 
+// Reset the radio device.  See section 7.2.2 of data sheet.
+// NOTE: the RFM95 requires the reset pin to be in input mode
+// except while resetting the chip, unlike the RFM69 for example.
+
 void rfm95_reset(void) {
 	ESP_LOGD(TAG, "reset");
 	gpio_set_direction(LORA_RST, GPIO_MODE_OUTPUT);
 	gpio_set_level(LORA_RST, 0);
 	usleep(100);
-	gpio_set_level(LORA_RST, 1);
+	gpio_set_direction(LORA_RST, GPIO_MODE_INPUT);
 	usleep(5*MILLISECONDS);
 }
 
