@@ -25,10 +25,10 @@ static void set_mode(uint8_t mode) {
 	if (mode == cur_mode) {
 		return;
 	}
-	ESP_LOGD(TAG, "set_mode %d -> %d", cur_mode, mode);
 	write_register(REG_OP_MODE, FSK_OOK_MODE | MODULATION_OOK | mode);
+	ESP_LOGD(TAG, "set_mode %d -> %d", cur_mode, mode);
 	if (cur_mode == MODE_SLEEP) {
-		usleep(500);
+		usleep(100);
 	}
 	for (int w = 0; w < MAX_WAIT; w++) {
 		cur_mode = read_mode();
