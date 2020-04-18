@@ -163,7 +163,7 @@ static inline void xmit(uint8_t* data, int len) {
 	write_burst(REG_FIFO, data, len);
 }
 
-static bool wait_for_fifo_non_empty(void) {
+static bool wait_for_fifo_room(void) {
 	for (int w = 0; w < MAX_WAIT; w++) {
 		if (!fifo_full()) {
 			return true;
@@ -211,11 +211,11 @@ void transmit(uint8_t *buf, int count) {
 	xmit(buf, n);
 	ESP_LOGD(TAG, "after xmit: mode = %d", read_mode());
 	while (n < count) {
-		if (!wait_for_fifo_non_empty()) return;
+		if (!wait_for_fifo_room()) return;
 		xmit_byte(buf[n]);
 		n++;
 	}
-	if (!wait_for_fifo_non_empty()) return;
+	if (!wait_for_fifo_room()) return;
 	xmit_byte(0);
 	// Rely on the sequencer to end Transmit mode after PacketSent is triggered.
 	wait_for_transmit_done();
