@@ -9,6 +9,8 @@ char *http_get(esp_http_client_handle_t client);
 
 extern time_t http_server_time;
 
+time_t make_gmt(struct tm *tm);
+
 char *time_string(const time_t *t);
 
 typedef struct {

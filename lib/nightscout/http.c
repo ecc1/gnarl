@@ -6,6 +6,8 @@
 #include <esp_log.h>
 #include <esp_http_client.h>
 
+#include "nightscout.h"
+
 time_t http_server_time;
 
 char *http_get(esp_http_client_handle_t client) {
@@ -41,8 +43,6 @@ char *http_get(esp_http_client_handle_t client) {
 }
 
 static const char *rfc1123_format = "%a, %d %b %Y %T %Z";
-
-time_t make_gmt(struct tm *tm);
 
 esp_err_t http_header_callback(esp_http_client_event_t *e) {
 	if (e->event_id != HTTP_EVENT_ON_HEADER) {
