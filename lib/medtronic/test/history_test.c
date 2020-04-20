@@ -1,4 +1,4 @@
-#include "testing.h"
+#include "medtronic_test.h"
 
 static char *test_data_dir = "./testdata";
 

@@ -1,7 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
-
-#include "testing.h"
+#include "medtronic_test.h"
 
 void usage(void) {
 	fprintf(stderr, "Usage: read_history [-m model] data-file\n");

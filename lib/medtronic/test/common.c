@@ -1,43 +1,4 @@
-// This is needed for the declaration of fmemopen() and strptime()
-#define _XOPEN_SOURCE	700
-
-#include <ctype.h>
-#include <stdarg.h>
-
-#include "testing.h"
-
-static uint8_t page[HISTORY_PAGE_SIZE + 2];
-
-int read_bytes(FILE *f) {
-	int n = 0;
-	for (;;) {
-		int c;
-		for (;;) {
-			c = fgetc(f);
-			if (c == EOF) {
-				fclose(f);
-				return n;
-			}
-			if (!isspace(c)) {
-				break;
-			}
-		}
-		char buf[3];
-		buf[0] = c;
-		buf[1] = fgetc(f);
-		buf[2] = 0;
-		uint8_t b = strtol(buf, 0, 16);
-		page[n] = b;
-		n++;
-	}
-	fclose(f);
-	return n;
-}
-
-uint8_t *parse_bytes(char *str) {
-	read_bytes(fmemopen(str, strlen(str), "r"));
-	return page;
-}
+#include "medtronic_test.h"
 
 void parse_data(char *filename, int family) {
 	printf("%s (x%d)\n", filename, family);
@@ -46,7 +7,8 @@ void parse_data(char *filename, int family) {
 		perror(filename);
 		exit(1);
 	}
-	int nbytes = read_bytes(f);
+	static uint8_t page[HISTORY_PAGE_SIZE + 2]; // include space for 2-byte CRC
+	int nbytes = read_bytes(f, page, sizeof(page));
 	history_length = decode_history(page, family, history, nbytes);
 }
 
@@ -102,39 +64,4 @@ time_t parse_duration(const char *str) {
 		malformed(str);
 	}
 	return t;
-}
-
-static int test_failures = 0;
-
-void test_failed(const char *format, ...) {
-	test_failures++;
-	va_list ap;
-	va_start(ap, format);
-	fprintf(stderr, "FAIL ");
-	vfprintf(stderr, format, ap);
-	fprintf(stderr, "\n");
-	va_end(ap);
-}
-
-void exit_test(void) {
-	exit(test_failures);
-}
-
-#define MAX_FILE_SIZE	32768
-
-char *read_file(const char *name) {
-	static char buf[MAX_FILE_SIZE];
-	FILE *f = fopen(name, "r");
-	assert(f != NULL);
-	int i = 0;
-	for (;;) {
-		assert(i < sizeof(buf)-1);
-		int n = fread(&buf[i], 1, sizeof(buf)-1-i, f);
-		if (n == 0) {
-			break;
-		}
-		i += n;
-	}
-	buf[i] = '\0';
-	return buf;
 }

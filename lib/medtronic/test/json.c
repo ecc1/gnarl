@@ -1,6 +1,6 @@
 #include <cJSON.h>
 
-#include "testing.h"
+#include "medtronic_test.h"
 
 static cJSON *object_path(cJSON *obj, const char *path) {
 	char buf[20];
