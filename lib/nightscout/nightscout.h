@@ -7,6 +7,10 @@ esp_http_client_handle_t xdrip_client_handle(const char *hostname);
 
 char *http_get(esp_http_client_handle_t client);
 
+extern time_t http_server_time;
+
+char *time_string(const time_t *t);
+
 typedef struct {
 	struct timeval tv;
 	int sgv;
