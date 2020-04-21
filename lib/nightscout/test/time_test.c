@@ -6,11 +6,11 @@ static void test_time(time_t t) {
 	gmtime_r(&t, &tm);
 	time_t t0 = timegm(&tm);
 	if (t0 != t) {
-		test_failed("[%s] timegm = %ld", time_string(&t), t0);
+		test_failed("[%s] timegm = %ld", nightscout_time_string(t), t0);
 	}
 	time_t t1 = make_gmt(&tm);
 	if (t1 != t) {
-		test_failed("[%s] make_gmt = %ld", time_string(&t), t1);
+		test_failed("[%s] make_gmt = %ld", nightscout_time_string(t), t1);
 	}
 }
 

@@ -36,8 +36,8 @@ time_t make_gmt(struct tm *tm) {
 	return (days * 24 + tm->tm_hour) * 3600 + tm->tm_min * 60  + tm->tm_sec;
 }
 
-char *time_string(const time_t *t) {
-	struct tm *tm = localtime(t);
+char *nightscout_time_string(time_t t) {
+	struct tm *tm = localtime(&t);
 	static char buf[20];
 	strftime(buf, sizeof(buf), "%F %T", tm);
 	return buf;

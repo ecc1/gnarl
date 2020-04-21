@@ -11,7 +11,7 @@ extern time_t http_server_time;
 
 time_t make_gmt(struct tm *tm);
 
-char *time_string(const time_t *t);
+char *nightscout_time_string(time_t t);
 
 typedef struct {
 	struct timeval tv;
