@@ -8,7 +8,7 @@
 #include <freertos/task.h>
 #include <nvs_flash.h>
 
-#include "wifi_config.h"
+#include "network_config.h"
 
 #define MAX_RETRIES  		5
 #define RETRY_INTERVAL		100	// milliseconds
@@ -88,11 +88,18 @@ static void wifi_init(void) {
 	}
 }
 
+static char addr[20];
+static esp_netif_ip_info_t ip_info;
+
 char *ip_address(void) {
-	static char addr[20];
-	esp_netif_ip_info_t ip_info;
 	ESP_ERROR_CHECK(esp_netif_get_ip_info(wifi_interface, &ip_info));
 	esp_ip4addr_ntoa(&ip_info.ip, addr, sizeof(addr));
+	return addr;
+}
+
+char *gateway_address(void) {
+	ESP_ERROR_CHECK(esp_netif_get_ip_info(wifi_interface, &ip_info));
+	esp_ip4addr_ntoa(&ip_info.gw, addr, sizeof(addr));
 	return addr;
 }
 

@@ -2,7 +2,7 @@
 #include <lwip/ip_addr.h>
 #include <lwip/netdb.h>
 
-#include "tether.h"
+#include "network.h"
 
 static void lookup_host(const char *hostname) {
 	struct hostent *he = gethostbyname(hostname);

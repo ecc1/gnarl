@@ -14,7 +14,7 @@
 #include <lwip/tcpip.h>
 #include <netif/ethernet.h>
 
-#include "tether_config.h"
+#include "network_config.h"
 
 static struct netif bnep_netif;
 

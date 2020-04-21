@@ -1,13 +1,8 @@
 #include <time.h>
 
+#include "network.h"
 #include "nightscout.h"
 #include "timezone_config.h"
-
-#ifdef USE_WIFI
-#include "wifi.h"
-#else
-#include "tether.h"
-#endif
 
 void app_main(void) {
 	printf("IP address: %s\n", ip_address());
