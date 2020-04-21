@@ -9,5 +9,8 @@ void app_main(void) {
 	setenv("TZ", TZ, 1);
 	tzset();
 	char *response = http_get(nightscout_client_handle());
+	if (http_server_time) {
+		printf("%s  server time\n", time_string(&http_server_time));
+	}
 	process_nightscout_entries(response, print_nightscout_entry);
 }
