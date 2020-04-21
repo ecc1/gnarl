@@ -2,13 +2,6 @@
 
 #include "medtronic.h"
 
-char *time_string(time_t t) {
-	static char buf[20];
-	struct tm *tm = localtime(&t);
-	strftime(buf, sizeof(buf), "%F %T", tm);
-	return buf;
-}
-
 time_t since_midnight(time_t t) {
 	struct tm *tm = localtime(&t);
 	return tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec;

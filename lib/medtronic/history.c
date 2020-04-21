@@ -21,6 +21,13 @@ time_t decode_time(uint8_t *data) {
 	return mktime(&tm);
 }
 
+char *pump_time_string(time_t t) {
+	struct tm *tm = localtime(&t);
+	static char buf[20];
+	strftime(buf, sizeof(buf), "%F %T", tm);
+	return buf;
+}
+
 // Return 1 for insulin-related events, 0 for events to skip, -1 on error.
 static int decode_history_record(uint8_t *data, int len, int family, history_record_t *r) {
 	memset(r, 0, sizeof(*r));
@@ -124,7 +131,7 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 			r->insulin = int_to_insulin(((data[7] & 0x7) << 8) | data[1], 23);
 			return 1;
 		default:
-			ESP_LOGE(TAG, "ignoring %3d percent temp basal in pump history at %s", data[1], time_string(r->time));
+			ESP_LOGE(TAG, "ignoring %3d percent temp basal in pump history at %s", data[1], pump_time_string(r->time));
 			return 0;
 		}
 	case LowReservoir:

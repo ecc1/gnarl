@@ -14,5 +14,5 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < 5; i++) {
 		data[i] = strtol(argv[i + 1], 0, 16);
 	}
-	printf("%s\n", time_string(decode_time(data)));
+	printf("%s\n", pump_time_string(decode_time(data)));
 }
