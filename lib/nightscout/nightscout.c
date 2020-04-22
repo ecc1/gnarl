@@ -1,3 +1,7 @@
+#define TAG		"NS"
+#define LOG_LOCAL_LEVEL	ESP_LOG_DEBUG
+#include <esp_log.h>
+
 #include "nightscout.h"
 #include "nightscout_config.h"
 
@@ -21,5 +25,6 @@ esp_http_client_handle_t nightscout_client_handle(void) {
 		.cert_pem = root_cert_pem_start,
 		.event_handler = http_header_callback,
 	};
+	ESP_LOGI(TAG, "Nightscout URL: %s", config.url);
 	return esp_http_client_init(&config);
 }
