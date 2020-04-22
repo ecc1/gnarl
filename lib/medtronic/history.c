@@ -28,103 +28,135 @@ char *pump_time_string(time_t t) {
 	return buf;
 }
 
-// Return 1 for insulin-related events, 0 for events to skip, -1 on error.
+#define UNKNOWN_RECORD_ERR	(-1)
+#define RECORD_SIZE_ERR		(-2)
+
+#define REQUIRE_BYTES(n)	if ((r->length = (n)) > len) return RECORD_SIZE_ERR; else
+
+// Return 1 for insulin-related records, 0 for records to skip, negative values for errors.
+// Insulin-related records:
+//   BasalProfileStart (x23 and newer models only)
+//   TempBasalRate and TempBasalDuration
+//   SuspendPump and ResumePump
+//   Bolus (normal and square wave)
+//   Rewind and Prime
+//   Alarm and ClearAlarm
 static int decode_history_record(uint8_t *data, int len, int family, history_record_t *r) {
-	memset(r, 0, sizeof(*r));
+	memset(r, 0, sizeof(history_record_t));
 	r->type = data[0];
-	r->length = 7;
 	switch (r->type) {
 	case Bolus:
 		if (family <= 22) {
-			r->length = 9;
+			REQUIRE_BYTES(9);
 			r->time = decode_time(&data[4]);
 			r->insulin = int_to_insulin(data[2], family);
 			r->duration = half_hours(data[3]);
 		} else {
-			r->length = 13;
+			REQUIRE_BYTES(13);
 			r->time = decode_time(&data[8]);
 			r->insulin = int_to_insulin(two_byte_be_int(&data[3]), family);
 			r->duration = half_hours(data[7]);
 		}
 		return 1;
 	case Prime:
-		r->length = 10;
+		REQUIRE_BYTES(10);
 		return 0;
 	case Alarm:
-		r->length = 9;
+		REQUIRE_BYTES(9);
 		return 0;
 	case DailyTotal:
-		r->length = family <= 22 ? 7 : 10;
+		REQUIRE_BYTES(family <= 22 ? 7 : 10);
 		return 0;
 	case BasalProfileBefore:
-		r->length = 152;
+		REQUIRE_BYTES(152);
 		return 0;
 	case BasalProfileAfter:
-		r->length = 152;
+		REQUIRE_BYTES(152);
 		return 0;
 	case BGCapture:
+		REQUIRE_BYTES(7);
 		return 0;
 	case SensorAlarm:
-		r->length = 8;
+		REQUIRE_BYTES(8);
 		return 0;
 	case ClearAlarm:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeBasalPattern:
+		REQUIRE_BYTES(7);
 		return 0;
 	case TempBasalDuration:
+		REQUIRE_BYTES(7);
 		r->time = decode_time(&data[2]);
 		r->duration = half_hours(data[1]);
 		return 1;
 	case ChangeTime:
+		REQUIRE_BYTES(7);
 		return 0;
 	case NewTime:
+		REQUIRE_BYTES(7);
 		return 0;
 	case LowBattery:
+		REQUIRE_BYTES(7);
 		return 0;
 	case BatteryChange:
+		REQUIRE_BYTES(7);
 		return 0;
 	case SetAutoOff:
+		REQUIRE_BYTES(7);
 		return 0;
 	case PrepareInsulinChange:
+		REQUIRE_BYTES(7);
 		return 0;
 	case SuspendPump:
+		REQUIRE_BYTES(7);
 		r->time = decode_time(&data[2]);
 		return 1;
 	case ResumePump:
+		REQUIRE_BYTES(7);
 		r->time = decode_time(&data[2]);
 		return 1;
 	case SelfTest:
+		REQUIRE_BYTES(7);
 		return 0;
 	case Rewind:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ClearSettings:
+		REQUIRE_BYTES(7);
 		return 0;
 	case EnableChildBlock:
+		REQUIRE_BYTES(7);
 		return 0;
 	case MaxBolus:
+		REQUIRE_BYTES(7);
 		return 0;
 	case EnableRemote:
-		r->length = 21;
+		REQUIRE_BYTES(21);
 		return 0;
 	case MaxBasal:
+		REQUIRE_BYTES(7);
 		return 0;
 	case EnableBolusWizard:
+		REQUIRE_BYTES(7);
 		return 0;
 	case Unknown2E:
-		r->length = 107;
+		REQUIRE_BYTES(107);
 		return 0;
 	case BolusWizard512:
-		r->length = 19;
+		REQUIRE_BYTES(19);
 		return 0;
 	case UnabsorbedInsulin512:
-		r->length = data[1];
+		REQUIRE_BYTES(data[1]);
 		return 0;
 	case ChangeBGReminder:
+		REQUIRE_BYTES(7);
 		return 0;
 	case SetAlarmClockTime:
+		REQUIRE_BYTES(7);
 		return 0;
 	case TempBasalRate:
-		r->length = 8;
+		REQUIRE_BYTES(8);
 		r->time = decode_time(&data[2]);
 		switch (data[7] >> 3) { // temp basal type
 		case ABSOLUTE:
@@ -135,134 +167,157 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 			return 0;
 		}
 	case LowReservoir:
+		REQUIRE_BYTES(7);
 		return 0;
 	case AlarmClock:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeMeterID:
-		r->length = 21;
+		REQUIRE_BYTES(21);
 		return 0;
 	case BGReceived512:
-		r->length = 10;
+		REQUIRE_BYTES(10);
 		return 0;
 	case ConfirmInsulinChange:
+		REQUIRE_BYTES(7);
 		return 0;
 	case SensorStatus:
+		REQUIRE_BYTES(7);
 		return 0;
 	case EnableMeter:
-		r->length = 21;
+		REQUIRE_BYTES(21);
 		return 0;
 	case BGReceived:
-		r->length = 10;
+		REQUIRE_BYTES(10);
 		return 0;
 	case MealMarker:
-		r->length = 9;
+		REQUIRE_BYTES(9);
 		return 0;
 	case ExerciseMarker:
-		r->length = 8;
+		REQUIRE_BYTES(8);
 		return 0;
 	case InsulinMarker:
-		r->length = 8;
+		REQUIRE_BYTES(8);
 		return 0;
 	case OtherMarker:
+		REQUIRE_BYTES(7);
 		return 0;
 	case EnableSensorAutoCal:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeBolusWizardSetup:
-		r->length = 39;
+		REQUIRE_BYTES(39);
 		return 0;
 	case SensorSetup:
-		r->length = family >= 51 ? 41 : 37;
+		REQUIRE_BYTES(family >= 51 ? 41 : 37);
 		return 0;
 	case Sensor51:
+		REQUIRE_BYTES(7);
 		return 0;
 	case Sensor52:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeSensorAlarm:
-		r->length = 8;
+		REQUIRE_BYTES(8);
 		return 0;
 	case Sensor54:
-		r->length = 64;
+		REQUIRE_BYTES(64);
 		return 0;
 	case Sensor55:
-		r->length = 55;
+		REQUIRE_BYTES(55);
 		return 0;
 	case ChangeSensorAlert:
-		r->length = 12;
+		REQUIRE_BYTES(12);
 		return 0;
 	case ChangeBolusStep:
+		REQUIRE_BYTES(7);
 		return 0;
 	case BolusWizardSetup:
-		r->length = family <= 22 ? 124 : 144;
+		REQUIRE_BYTES(family <= 22 ? 124 : 144);
 		return 0;
 	case BolusWizard:
-		r->length = family <= 22 ? 20 : 22;
+		REQUIRE_BYTES(family <= 22 ? 20 : 22);
 		return 0;
 	case UnabsorbedInsulin:
-		r->length = data[1];
+		REQUIRE_BYTES(data[1]);
 		return 0;
 	case SaveSettings:
+		REQUIRE_BYTES(7);
 		return 0;
 	case EnableVariableBolus:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeEasyBolus:
+		REQUIRE_BYTES(7);
 		return 0;
 	case EnableBGReminder:
+		REQUIRE_BYTES(7);
 		return 0;
 	case EnableAlarmClock:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeTempBasalType:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeAlarmType:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeTimeFormat:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeReservoirWarning:
+		REQUIRE_BYTES(7);
 		return 0;
 	case EnableBolusReminder:
+		REQUIRE_BYTES(7);
 		return 0;
 	case SetBolusReminderTime:
-		r->length = 9;
+		REQUIRE_BYTES(9);
 		return 0;
 	case DeleteBolusReminderTime:
-		r->length = 9;
+		REQUIRE_BYTES(9);
 		return 0;
 	case BolusReminder:
-		r->length = 9;
+		REQUIRE_BYTES(9);
 		return 0;
 	case DeleteAlarmClockTime:
+		REQUIRE_BYTES(7);
 		return 0;
 	case DailyTotal515:
-		r->length = 38;
+		REQUIRE_BYTES(38);
 		return 0;
 	case DailyTotal522:
-		r->length = 44;
+		REQUIRE_BYTES(44);
 		return 0;
 	case DailyTotal523:
-		r->length = 52;
+		REQUIRE_BYTES(52);
 		return 0;
 	case ChangeCarbUnits:
+		REQUIRE_BYTES(7);
 		return 0;
 	case BasalProfileStart:
-		r->length = 10;
+		REQUIRE_BYTES(10);
 		r->time = decode_time(&data[2]);
 		// data[7] = starting half-hour
 		r->insulin = int_to_insulin(two_byte_le_int(&data[8]), 23);
 		return 1;
 	case ConnectOtherDevices:
+		REQUIRE_BYTES(7);
 		return 0;
 	case ChangeOtherDevice:
-		r->length = 37;
+		REQUIRE_BYTES(37);
 		return 0;
 	case ChangeMarriage:
-		r->length = 12;
+		REQUIRE_BYTES(12);
 		return 0;
 	case DeleteOtherDevice:
-		r->length = 12;
+		REQUIRE_BYTES(12);
 		return 0;
 	case EnableCaptureEvent:
+		REQUIRE_BYTES(7);
 		return 0;
 	default:
-		return -1;
+		return UNKNOWN_RECORD_ERR;
 	}
 }
 
@@ -283,26 +338,34 @@ void print_bytes(const char *msg, const uint8_t *data, int len) {
 	printf("\n");
 }
 
-int decode_history(uint8_t *page, int family, history_record_t *r, int max) {
+void decode_history(uint8_t *page, int len, int family, history_record_fn_t decode_fn) {
 	uint8_t *data = page;
-	int len = HISTORY_PAGE_SIZE;
-	int count = 0;
-	while (count < max) {
+	history_record_t rec;
+	while (len > 0) {
 		if (all_zero(data, len)) {
-			break;
+			return;
 		}
-		int e = decode_history_record(data, len, family, r);
-		if (e == -1) {
-			ESP_LOGE(TAG, "unknown history record type %02X", data[0]);
+		int e = decode_history_record(data, len, family, &rec);
+		switch (e) {
+		case UNKNOWN_RECORD_ERR:
+			ESP_LOGE(TAG, "unknown history record type %02X", rec.type);
 			print_bytes("history data", data, len);
+			return;
+		case RECORD_SIZE_ERR:
+			ESP_LOGE(TAG, "history record type %02X would require %d bytes", rec.type, rec.length);
+			print_bytes("history data", data, len);
+			return;
+		default:
+			if (e < 0) {
+				ESP_LOGE(TAG, "history record type %02X: unknown error %d", rec.type, e);
+				return;
+			}
 			break;
 		}
-		data += r->length;
-		len -= r->length;
-		if (e == 1) {
-			count++;
-			r++;
+		if (e == 1 && decode_fn(&rec) != 0) {
+			return;
 		}
+		data += rec.length;
+		len -= rec.length;
 	}
-	return count;
 }

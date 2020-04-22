@@ -1,5 +1,16 @@
 #include "medtronic_test.h"
 
+history_record_t history[MAX_HISTORY];
+int history_length;
+
+static int store_record(history_record_t *r) {
+	if (history_length == MAX_HISTORY) {
+		return 1;
+	}
+	history[history_length++] = *r;
+	return 0;
+}
+
 void parse_data(char *filename, int family) {
 	printf("%s (x%d)\n", filename, family);
 	FILE *f = fopen(filename, "r");
@@ -7,9 +18,10 @@ void parse_data(char *filename, int family) {
 		perror(filename);
 		exit(1);
 	}
-	static uint8_t page[HISTORY_PAGE_SIZE + 2]; // include space for 2-byte CRC
+	static uint8_t page[HISTORY_PAGE_SIZE];
 	int nbytes = read_bytes(f, page, sizeof(page));
-	history_length = decode_history(page, family, history, nbytes);
+	history_length = 0;
+	decode_history(page, nbytes, family, store_record);
 }
 
 time_t parse_json_time(const char *str) {

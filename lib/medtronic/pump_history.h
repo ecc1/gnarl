@@ -93,4 +93,10 @@ typedef struct {
 } history_record_t;
 
 time_t decode_time(uint8_t *data);
-int decode_history(uint8_t *page, int family, history_record_t *r, int max);
+
+// Signature of function to be applied to history records during decoding.
+typedef int (*history_record_fn_t)(history_record_t *);
+
+// Decode the given history page and apply f to each insulin-related record.
+// If f returns a non-zero value, the decoding loop terminates.
+void decode_history(uint8_t *page, int len, int family, history_record_fn_t decode_fn);
