@@ -16,7 +16,7 @@ clean:
 
 TEST_DIR = ../../../test
 
-CFLAGS += -Wall -I . -I .. -I $(TEST_DIR) -I /usr/include/cjson
+CFLAGS += -Wall -Wempty-body -Wpedantic -Wunused -I . -I .. -I $(TEST_DIR) -I /usr/include/cjson
 LDFLAGS += -lcjson
 
 COMMON_CODE = $(TEST_DIR)/common.c

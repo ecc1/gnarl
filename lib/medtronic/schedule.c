@@ -20,7 +20,7 @@ time_t since_midnight(time_t t) {
 		return last;				\
 	}
 
-DEFINE_SCHEDULE_LOOKUP(basal_rate);
-DEFINE_SCHEDULE_LOOKUP(carb_ratio);
-DEFINE_SCHEDULE_LOOKUP(sensitivity);
-DEFINE_SCHEDULE_LOOKUP(target);
+DEFINE_SCHEDULE_LOOKUP(basal_rate)
+DEFINE_SCHEDULE_LOOKUP(carb_ratio)
+DEFINE_SCHEDULE_LOOKUP(sensitivity)
+DEFINE_SCHEDULE_LOOKUP(target)

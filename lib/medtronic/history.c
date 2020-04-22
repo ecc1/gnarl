@@ -31,7 +31,11 @@ char *pump_time_string(time_t t) {
 #define UNKNOWN_RECORD_ERR	(-1)
 #define RECORD_SIZE_ERR		(-2)
 
-#define REQUIRE_BYTES(n)	if ((r->length = (n)) > len) return RECORD_SIZE_ERR; else
+#define REQUIRE_BYTES(n)					\
+	do {							\
+		r->length = (n);				\
+		if (r->length > len) return RECORD_SIZE_ERR;	\
+	} while (0)
 
 // Return 1 for insulin-related records, 0 for records to skip, negative values for errors.
 // Insulin-related records:
