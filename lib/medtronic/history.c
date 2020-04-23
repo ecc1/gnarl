@@ -325,13 +325,13 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 	}
 }
 
-static int all_zero(uint8_t *data, int len) {
+static bool all_zero(uint8_t *data, int len) {
 	for (int i = 0; i < len; i++) {
 		if (data[i] != 0) {
-			return 0;
+			return false;
 		}
 	}
-	return 1;
+	return true;
 }
 
 void print_bytes(const char *msg, const uint8_t *data, int len) {

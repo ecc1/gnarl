@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <time.h>
 
 #define HISTORY_PAGE_SIZE	1022
@@ -80,7 +81,7 @@ int pump_settings(settings_t *r);
 int pump_status(status_t *r);
 int pump_targets(target_t *r, int max);
 int pump_temp_basal(int *minutes);
-int pump_wakeup(void);
+bool pump_wakeup(void);
 
 char *pump_time_string(time_t t);
 time_t since_midnight(time_t t);
