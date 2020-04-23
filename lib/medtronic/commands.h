@@ -1,3 +1,10 @@
+#ifndef _COMMANDS_H
+#define _COMMANDS_H
+
+#include <stdint.h>
+#include <string.h>
+#include <time.h>
+
 #define LOG_LOCAL_LEVEL	ESP_LOG_DEBUG
 #define TAG		"medtronic"
 #include <esp_log.h>
@@ -51,3 +58,5 @@ static inline time_t half_hours(int n) {
 }
 
 void print_bytes(const char *msg, const uint8_t *data, int len);
+
+#endif // _COMMANDS_H

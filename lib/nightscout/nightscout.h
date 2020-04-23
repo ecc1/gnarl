@@ -1,3 +1,7 @@
+#ifndef _NIGHTSCOUT_H
+#define _NIGHTSCOUT_H
+
+#include <time.h>
 #include <sys/time.h>
 
 #include <esp_http_client.h>
@@ -23,3 +27,5 @@ typedef void (nightscout_entry_callback_t)(const nightscout_entry_t *e);
 void process_nightscout_entries(const char *json, nightscout_entry_callback_t callback);
 
 void print_nightscout_entry(const nightscout_entry_t *e);
+
+#endif // _NIGHTSCOUT_H

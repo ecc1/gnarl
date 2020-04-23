@@ -1,4 +1,8 @@
+#ifndef _MEDTRONIC_H
+#define _MEDTRONIC_H
+
 #include <stdbool.h>
+#include <stdint.h>
 #include <time.h>
 
 #define HISTORY_PAGE_SIZE	1022
@@ -95,3 +99,5 @@ DECLARE_SCHEDULE_LOOKUP(basal_rate);
 DECLARE_SCHEDULE_LOOKUP(carb_ratio);
 DECLARE_SCHEDULE_LOOKUP(sensitivity);
 DECLARE_SCHEDULE_LOOKUP(target);
+
+#endif // _MEDTRONIC_H

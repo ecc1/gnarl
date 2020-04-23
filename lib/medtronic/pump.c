@@ -1,6 +1,3 @@
-#include <stdint.h>
-#include <stdio.h>
-
 #include "medtronic.h"
 #include "commands.h"
 

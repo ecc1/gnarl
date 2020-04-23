@@ -1,5 +1,3 @@
-#include <stdint.h>
-
 #include "medtronic.h"
 
 time_of_day_t since_midnight(time_t t) {

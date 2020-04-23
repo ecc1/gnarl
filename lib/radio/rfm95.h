@@ -1,3 +1,8 @@
+#ifndef _RFM95_H
+#define _RFM95_H
+
+#include <stdint.h>
+
 // Pin mappings on TTGO ESP32 LoRa OLED v1 module
 
 #define DIO0			GPIO_NUM_26
@@ -155,3 +160,5 @@ int sleep_receive(uint8_t *buf, int count, int timeout);
 int read_rssi(void);
 
 int rx_packet_count(void);
+
+#endif // _RFM95_H

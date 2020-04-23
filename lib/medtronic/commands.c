@@ -1,6 +1,3 @@
-#include <stdint.h>
-#include <string.h>
-
 #include "medtronic.h"
 #include "4b6b.h"
 #include "commands.h"

@@ -1,3 +1,6 @@
+#ifndef _OLED_H
+#define _OLED_H
+
 #define OLED_WIDTH	128
 #define OLED_HEIGHT	64
 
@@ -30,3 +33,5 @@ extern int oled_string_width(const char *s);
 extern void oled_draw_string(int x, int y, const char *s);
 
 extern void oled_draw_box(int x, int y, int w, int h);
+
+#endif // _OLED_H
