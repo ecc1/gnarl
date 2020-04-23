@@ -15,8 +15,11 @@ typedef enum PACKED {
 	MMOL_PER_L = 2,
 } glucose_units_t;
 
-// Glucose represents a glucose value as either mg/dL or μmol/L,
+// Glucose is represented in mg/dL.
 typedef uint32_t glucose_t;
+
+// The time of day is represented as seconds since midnight.
+typedef uint32_t time_of_day_t;
 
 typedef enum PACKED {
 	ABSOLUTE = 0,
@@ -41,24 +44,24 @@ typedef struct {
 #define STATUS_NORMAL	0x03
 
 typedef struct {
-	time_t start; // seconds since midnight
+	time_of_day_t start;
 	insulin_t rate;
 } basal_rate_t;
 
 typedef struct {
-	time_t start; // seconds since midnight
+	time_of_day_t start;
 	carb_units_t units;
 	int ratio; // 10x grams/unit or 1000x units/exchange
 } carb_ratio_t;
 
 typedef struct {
-	time_t start; // seconds since midnight
+	time_of_day_t start;
 	glucose_units_t units;
 	glucose_t sensitivity;
 } sensitivity_t;
 
 typedef struct {
-	time_t start; // seconds since midnight
+	time_of_day_t start;
 	glucose_units_t units;
 	glucose_t low;
 	glucose_t high;
@@ -84,7 +87,7 @@ int pump_temp_basal(int *minutes);
 bool pump_wakeup(void);
 
 char *pump_time_string(time_t t);
-time_t since_midnight(time_t t);
+time_of_day_t since_midnight(time_t t);
 
 #define DECLARE_SCHEDULE_LOOKUP(type)	type##_t *type##_at(type##_t *r, int len, time_t t)
 

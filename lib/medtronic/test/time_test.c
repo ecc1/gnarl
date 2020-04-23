@@ -83,7 +83,7 @@ void test_parse_duration(void) {
 
 typedef struct {
 	char *ts;
-	time_t s;
+	time_of_day_t s;
 } since_midnight_case_t;
 
 since_midnight_case_t since_midnight_cases[] = {

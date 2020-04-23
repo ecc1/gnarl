@@ -2,7 +2,7 @@
 
 #include "medtronic.h"
 
-time_t since_midnight(time_t t) {
+time_of_day_t since_midnight(time_t t) {
 	struct tm *tm = localtime(&t);
 	return tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec;
 }
