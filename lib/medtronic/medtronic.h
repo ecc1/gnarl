@@ -1,6 +1,7 @@
 #ifndef _MEDTRONIC_H
 #define _MEDTRONIC_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
@@ -92,8 +93,9 @@ bool pump_wakeup(void);
 
 char *pump_time_string(time_t t);
 time_of_day_t since_midnight(time_t t);
+time_t next_change(basal_rate_t *schedule, int len, time_t t);
 
-#define DECLARE_SCHEDULE_LOOKUP(type)	type##_t *type##_at(type##_t *r, int len, time_t t)
+#define DECLARE_SCHEDULE_LOOKUP(type)	int type##_at(type##_t *r, int len, time_t t)
 
 DECLARE_SCHEDULE_LOOKUP(basal_rate);
 DECLARE_SCHEDULE_LOOKUP(carb_ratio);

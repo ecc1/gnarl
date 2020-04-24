@@ -19,3 +19,7 @@ uint8_t *parse_bytes(char *str);
 #define LEN(x)	(sizeof(x)/sizeof(x[0]))
 
 int close_enough(double x, double y);
+
+#define TEST_TIME_NOW		1585699200
+#define TOD(hh, mm)		((hh) * 3600 + (mm) * 60)
+#define TEST_TIME(hh, mm)	(TEST_TIME_NOW + TOD(hh, mm))
