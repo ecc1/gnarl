@@ -92,7 +92,7 @@ typedef struct {
 	uint8_t length;
 	time_t time;
 	insulin_t insulin;
-	time_t duration;
+	int duration;		// seconds
 } history_record_t;
 
 typedef enum PACKED {
