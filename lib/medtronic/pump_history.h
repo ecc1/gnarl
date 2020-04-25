@@ -95,6 +95,16 @@ typedef struct {
 	time_t duration;
 } history_record_t;
 
+typedef enum PACKED {
+	BatteryOutLimitExceeded = 0x03,
+	NoDelivery              = 0x04,
+	BatteryDepleted         = 0x05,
+	AutoOff                 = 0x06,
+	DeviceReset             = 0x10,
+	ReprogramError          = 0x3D,
+	EmptyReservoir          = 0x3E,
+} alarm_code_t;
+
 time_t decode_time(uint8_t *data);
 
 // Signature of function to be applied to history records during decoding.

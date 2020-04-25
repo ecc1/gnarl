@@ -62,10 +62,14 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 		return 1;
 	case Prime:
 		REQUIRE_BYTES(10);
-		return 0;
+		r->time = decode_time(&data[5]);
+		return 1;
 	case Alarm:
 		REQUIRE_BYTES(9);
-		return 0;
+		r->time = decode_time(&data[4]);
+		// Use insulin field to store alarm code.
+		r->insulin = data[1];
+		return 1;
 	case DailyTotal:
 		REQUIRE_BYTES(family <= 22 ? 7 : 10);
 		return 0;
@@ -83,7 +87,8 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 		return 0;
 	case ClearAlarm:
 		REQUIRE_BYTES(7);
-		return 0;
+		r->time = decode_time(&data[2]);
+		return 1;
 	case ChangeBasalPattern:
 		REQUIRE_BYTES(7);
 		return 0;
@@ -123,7 +128,8 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 		return 0;
 	case Rewind:
 		REQUIRE_BYTES(7);
-		return 0;
+		r->time = decode_time(&data[2]);
+		return 1;
 	case ClearSettings:
 		REQUIRE_BYTES(7);
 		return 0;
@@ -165,7 +171,11 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 			r->insulin = int_to_insulin(((data[7] & 0x7) << 8) | data[1], 23);
 			return 1;
 		default:
-			ESP_LOGE(TAG, "ignoring %3d percent temp basal in pump history at %s", data[1], pump_time_string(r->time));
+			if (data[1] == 0) {
+				r->insulin = 0;
+				return 1;
+			}
+			ESP_LOGE(TAG, "%3d percent temp basal in pump history at %s", data[1], pump_time_string(r->time));
 			return 0;
 		}
 	case LowReservoir:

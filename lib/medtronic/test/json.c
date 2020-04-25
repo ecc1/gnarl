@@ -86,6 +86,7 @@ static void check_duration(history_record_t *r, cJSON *obj) {
 
 static int records_matched;
 
+// This check must cover all record types for which decode_history_record can return 1.
 static void check_object(cJSON *obj) {
 	history_record_t *r = find_object(obj);
 	if (r == 0) {
@@ -96,12 +97,20 @@ static void check_object(cJSON *obj) {
 		check_insulin(r, object_path(obj, "Info.Amount"));
 		check_duration(r, object_path(obj, "Info.Duration"));
 		break;
+	case Prime:
+		break;
+	case Alarm:
+		break;
+	case ClearAlarm:
+		break;
 	case TempBasalDuration:
 		check_duration(r, cJSON_GetObjectItem(obj, "Info"));
 		break;
 	case SuspendPump:
 		break;
 	case ResumePump:
+		break;
+	case Rewind:
 		break;
 	case TempBasalRate:
 		check_insulin(r, object_path(obj, "Info.Value"));
