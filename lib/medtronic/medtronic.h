@@ -74,9 +74,9 @@ typedef struct {
 
 void pump_set_id(const char *id);
 
-int pump_basal_rates(basal_rate_t *r, int max);
+int pump_basal_rates(basal_rate_t *r, int len);
 int pump_battery(void);
-int pump_carb_ratios(carb_ratio_t *r, int max);
+int pump_carb_ratios(carb_ratio_t *r, int len);
 carb_units_t pump_carb_units(void);
 time_t pump_clock(void);
 int pump_family(void);
@@ -84,10 +84,10 @@ glucose_units_t pump_glucose_units(void);
 uint8_t *pump_history_page(int page_num);
 int pump_model(void);
 int pump_reservoir(void);
-int pump_sensitivities(sensitivity_t *r, int max);
+int pump_sensitivities(sensitivity_t *r, int len);
 int pump_settings(settings_t *r);
 int pump_status(status_t *r);
-int pump_targets(target_t *r, int max);
+int pump_targets(target_t *r, int len);
 int pump_temp_basal(int *minutes);
 bool pump_wakeup(void);
 

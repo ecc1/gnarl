@@ -23,11 +23,11 @@ int pump_family(void) {
 	return cached_pump_family;
 }
 
-int pump_basal_rates(basal_rate_t *r, int max) {
+int pump_basal_rates(basal_rate_t *r, int len) {
 	int n;
 	uint8_t *data = extended_response(CMD_BASAL_RATES, &n);
 	int count = 0;
-	for (int i = 0; i < n - 2 && count < max; i += 3, count++, r++) {
+	for (int i = 0; i < n - 2 && count < len; i += 3, count++, r++) {
 		int rate = int_to_insulin(two_byte_le_int(&data[i]), 23);
 		int t = data[i + 2];
 		// Don't stop if the 00:00 rate happens to be zero.
@@ -49,7 +49,7 @@ int pump_battery(void) {
 	return two_byte_be_int(&data[2]) * 10;
 }
 
-int pump_carb_ratios(carb_ratio_t *r, int max) {
+int pump_carb_ratios(carb_ratio_t *r, int len) {
 	// Call this before the main command so the response buffer isn't overwritten.
 	int fam = pump_family();
 	int n;
@@ -71,7 +71,7 @@ int pump_carb_ratios(carb_ratio_t *r, int max) {
 	carb_units_t units = data[1];
 	data += step;
 	int count = 0;
-	for (int i = 0; i <= num - step && count < max; i += step, count++, r++) {
+	for (int i = 0; i <= num - step && count < len; i += step, count++, r++) {
 		int t = data[i];
 		if (t == 0 && count != 0) {
 			break;
@@ -182,7 +182,7 @@ int pump_reservoir(void) {
 	return two_byte_be_int(&data[3]) * 25;
 }
 
-int pump_sensitivities(sensitivity_t *r, int max) {
+int pump_sensitivities(sensitivity_t *r, int len) {
 	int n;
 	uint8_t *data = short_command(CMD_SENSITIVITIES, &n);
 	if (!data || n < 2) {
@@ -201,7 +201,7 @@ int pump_sensitivities(sensitivity_t *r, int max) {
 	glucose_units_t units = data[1];
 	data += 2;
 	int count = 0;
-	for (int i = 0; i < num - 1 && count < max; i += 2, count++, r++) {
+	for (int i = 0; i < num - 1 && count < len; i += 2, count++, r++) {
 		int v = data[i];
 		int t = v & 0x3F;
 		if (t == 0 && count != 0) {
@@ -260,7 +260,7 @@ int pump_status(status_t *r) {
 	return 0;
 }
 
-int pump_targets(target_t *r, int max) {
+int pump_targets(target_t *r, int len) {
 	// Call this before the main command so the response buffer isn't overwritten.
 	int fam = pump_family();
 	command_t cmd = fam <= 12 ? CMD_TARGETS_512 : CMD_TARGETS;
@@ -283,7 +283,7 @@ int pump_targets(target_t *r, int max) {
 	glucose_units_t units = data[1];
 	data += 2;
 	int count = 0;
-	for (int i = 0; i <= num - step && count < max; i += step, count++, r++) {
+	for (int i = 0; i <= num - step && count < len; i += step, count++, r++) {
 		int t = data[i];
 		if (t == 0 && count != 0) {
 			break;
