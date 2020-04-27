@@ -61,8 +61,11 @@ void test_next_change(void) {
 		next_change_case_t *c = &next_change_cases[i];
 		time_t next = next_change(test_profile, LEN(test_profile), c->cur);
 		if (next != c->next) {
-			test_failed("[%d] next_change(%s) = %s, want %s",
-				    i, pump_time_string(c->cur), pump_time_string(next), pump_time_string(c->next));
+			char t1[TIME_STRING_SIZE], t2[TIME_STRING_SIZE], t3[TIME_STRING_SIZE];
+			test_failed("[%d] next_change(%s) = %s, want %s", i,
+				    pump_time_string(c->cur, t1),
+				    pump_time_string(next, t2),
+				    pump_time_string(c->next, t3));
 		}
 	}
 }

@@ -91,7 +91,9 @@ int pump_targets(target_t *r, int len);
 int pump_temp_basal(int *minutes);
 bool pump_wakeup(void);
 
-char *pump_time_string(time_t t);
+#define TIME_STRING_SIZE		20
+char *pump_time_string(time_t t, char *buf);
+
 time_of_day_t since_midnight(time_t t);
 time_t next_change(basal_rate_t *schedule, int len, time_t t);
 

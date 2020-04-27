@@ -19,10 +19,9 @@ time_t decode_time(uint8_t *data) {
 	return mktime(&tm);
 }
 
-char *pump_time_string(time_t t) {
+char *pump_time_string(time_t t, char *buf) {
 	struct tm *tm = localtime(&t);
-	static char buf[20];
-	strftime(buf, sizeof(buf), "%F %T", tm);
+	strftime(buf, 20, "%F %T", tm);
 	return buf;
 }
 
@@ -175,7 +174,9 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 				r->insulin = 0;
 				return 1;
 			}
-			ESP_LOGE(TAG, "%3d percent temp basal in pump history at %s", data[1], pump_time_string(r->time));
+			char ts[20];
+			ESP_LOGE(TAG, "%3d percent temp basal in pump history at %s",
+				 data[1], pump_time_string(r->time, ts));
 			return 0;
 		}
 	case LowReservoir:
