@@ -1,3 +1,6 @@
+#ifndef _TESTING_H
+#define _TESTING_H
+
 // This is needed for the declaration of strptime() and timegm()
 #define _GNU_SOURCE
 
@@ -22,6 +25,9 @@ void exit_test(void);
 char *read_file(const char *name);
 int read_bytes(FILE *f, uint8_t *buf, int len);
 uint8_t *parse_bytes(char *str);
+time_t parse_time(const char *str);
 time_t parse_json_time(const char *str);
 time_t parse_duration(const char *str);
 int close_enough(double x, double y);
+
+#endif // _TESTING_H

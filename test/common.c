@@ -85,6 +85,15 @@ time_t parse_json_time(const char *str) {
 	return mktime(&tm);
 }
 
+time_t parse_time(const char *str) {
+	struct tm tm = { .tm_isdst = -1 };
+	if (strptime(str, "%FT%H:%M", &tm) == 0) {
+		fprintf(stderr, "malformed time \"%s\"\n", str);
+		exit(1);
+	}
+	return mktime(&tm);
+}
+
 static void malformed(const char *str) {
 	fprintf(stderr, "malformed duration string \"%s\"\n", str);
 	exit(1);
