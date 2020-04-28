@@ -106,7 +106,7 @@ static void send(uint8_t *data, int len, int repeat_count, int delay_ms) {
 	print_bytes("TX: sending %d bytes:", data, len);
 	transmit(data, len);
 	while (repeat_count > 0) {
-		usleep(delay_ms  *MILLISECONDS);
+		usleep(delay_ms * MILLISECONDS);
 		transmit(data, len);
 		repeat_count--;
 	}

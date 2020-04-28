@@ -10,7 +10,7 @@
 static void print_wakeup_reason(void) {
 	esp_sleep_wakeup_cause_t r = esp_sleep_get_wakeup_cause();
 	const char *reason;
-	switch(r) {
+	switch (r) {
 	case ESP_SLEEP_WAKEUP_EXT0:
 		reason = "external signal using RTC_IO";
 		break;
