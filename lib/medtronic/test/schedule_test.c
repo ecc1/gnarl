@@ -63,9 +63,7 @@ void test_next_change(void) {
 		if (next != c->next) {
 			char t1[TIME_STRING_SIZE], t2[TIME_STRING_SIZE], t3[TIME_STRING_SIZE];
 			test_failed("[%d] next_change(%s) = %s, want %s", i,
-				    pump_time_string(c->cur, t1),
-				    pump_time_string(next, t2),
-				    pump_time_string(c->next, t3));
+				    time_string(c->cur, t1), time_string(next, t2), time_string(c->next, t3));
 		}
 	}
 }

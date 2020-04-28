@@ -1,10 +1,5 @@
 #include "medtronic.h"
 
-time_of_day_t since_midnight(time_t t) {
-	struct tm *tm = localtime(&t);
-	return tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec;
-}
-
 #define DEFINE_SCHEDULE_LOOKUP(type)			\
 	DECLARE_SCHEDULE_LOOKUP(type) {			\
 		time_t d = since_midnight(t);		\

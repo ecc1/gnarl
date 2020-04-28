@@ -91,9 +91,6 @@ int pump_targets(target_t *r, int len);
 int pump_temp_basal(int *minutes);
 bool pump_wakeup(void);
 
-#define TIME_STRING_SIZE		20
-char *pump_time_string(time_t t, char *buf);
-
 time_of_day_t since_midnight(time_t t);
 time_t next_change(basal_rate_t *schedule, int len, time_t t);
 
@@ -103,5 +100,17 @@ DECLARE_SCHEDULE_LOOKUP(basal_rate);
 DECLARE_SCHEDULE_LOOKUP(carb_ratio);
 DECLARE_SCHEDULE_LOOKUP(sensitivity);
 DECLARE_SCHEDULE_LOOKUP(target);
+
+#define TIME_STRING_SIZE	20
+char *time_string(time_t t, char *buf);
+
+#define SHORT_TIME_SIZE	10
+char *short_time(time_t t, char *buf);
+
+#define DURATION_STRING_SIZE	20
+char *duration_string(int seconds, char *buf);
+
+#define INSULIN_STRING_SIZE	16
+char *insulin_string(insulin_t ins, char *buf);
 
 #endif // _MEDTRONIC_H

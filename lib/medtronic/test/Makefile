@@ -5,5 +5,5 @@ programs = $(test_programs) $(other_programs)
 
 include ../../../mk/testing.mk
 
-$(programs): %: %.c common.c json.c stringer.c ../history.c ../schedule.c $(COMMON_CODE)
+$(programs): %: %.c common.c json.c stringer.c ../history.c ../schedule.c ../utility.c $(COMMON_CODE)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)

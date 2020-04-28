@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,5 +14,5 @@ int main(int argc, char **argv) {
 		data[i] = strtol(argv[i + 1], 0, 16);
 	}
 	char ts[TIME_STRING_SIZE];
-	printf("%s\n", pump_time_string(decode_time(data), ts));
+	printf("%s\n", time_string(decode_time(data), ts));
 }
