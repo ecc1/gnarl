@@ -1,10 +1,11 @@
 #define TAG		"BNEP"
-#define LOG_LOCAL_LEVEL	ESP_LOG_DEBUG
+#define LOG_LOCAL_LEVEL	ESP_LOG_INFO
 #include <esp_log.h>
 
 #include <btstack_config.h>
 #include <btstack.h>
 #include <btstack_run_loop_freertos.h>
+#include <btstack_port_esp32.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <lwip/dhcp.h>
@@ -221,17 +222,6 @@ static void wait_for_dhcp(void) {
 	}
 }
 
-void app_main_with_tethering(void);
-
-static void main_loop(void *unused) {
-	wait_for_dhcp();
-	ESP_LOGI(TAG, "IP address: %s", ip_address());
-	ESP_LOGI(TAG, "Gateway:    %s", gateway_address());
-	app_main_with_tethering();
-	ESP_LOGD(TAG, "Return from main application function");
-	vTaskDelete(0);
-}
-
 extern bd_addr_t bt_tether_addr;
 
 void handle_hci_startup_packet(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
@@ -240,7 +230,8 @@ void handle_hci_startup_packet(uint8_t packet_type, uint16_t channel, uint8_t *p
 #define SERVICE_CLASS_NETWORKING	(1 << 17)
 #define DEVICE_CLASS_LAN_NAP		(3 << 8)
 
-void btstack_main() {
+static void bt_loop(void *unused) {
+	btstack_init();
 	static btstack_packet_callback_registration_t hci_callback = {
 		.callback = handle_hci_startup_packet,
 	};
@@ -256,5 +247,10 @@ void btstack_main() {
 	sdp_init();
 	bnep_interface_init();
 	hci_power_control(HCI_POWER_ON);
-	xTaskCreate(main_loop, "main", 4096, 0, tskIDLE_PRIORITY + 16, 0);
+	btstack_run_loop_execute();
+}
+
+void tether_init(void) {
+	xTaskCreate(bt_loop, "bt_loop", 4096, 0, tskIDLE_PRIORITY + 10, 0);
+	wait_for_dhcp();
 }

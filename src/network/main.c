@@ -48,6 +48,7 @@ static char *http_get(const char *url) {
 }
 
 void app_main(void) {
+	network_init();
 	printf("IP address: %s\n", ip_address());
 	printf("Gateway:    %s\n", gateway_address());
 	lookup_host("google.com");

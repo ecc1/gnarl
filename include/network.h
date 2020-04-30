@@ -5,10 +5,12 @@ char *gateway_address(void);
 
 #ifdef USE_BLUETOOTH_TETHERING
 
-#define app_main	app_main_with_tethering
+void tether_init(void);
+#define network_init	tether_init
 
 #else
 
-#define app_main	app_main_with_wifi
+void wifi_init(void);
+#define network_init	wifi_init
 
 #endif

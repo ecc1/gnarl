@@ -59,7 +59,7 @@ static void handle_ip_event(void* arg, esp_event_base_t event_base, int32_t even
 	}
 }
 
-static void wifi_init(void) {
+void wifi_init(void) {
 	ESP_ERROR_CHECK(nvs_flash_init());
 	ESP_ERROR_CHECK(esp_netif_init());
 
@@ -101,13 +101,4 @@ char *gateway_address(void) {
 	ESP_ERROR_CHECK(esp_netif_get_ip_info(wifi_interface, &ip_info));
 	esp_ip4addr_ntoa(&ip_info.gw, addr, sizeof(addr));
 	return addr;
-}
-
-void app_main_with_wifi(void);
-
-void app_main(void) {
-	wifi_init();
-	ESP_LOGI(TAG, "IP address: %s", ip_address());
-	app_main_with_wifi();
-	ESP_LOGD(TAG, "Return from main application function");
 }
