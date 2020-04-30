@@ -210,9 +210,11 @@ static void status_callback(struct netif *netif) {
 	have_ip_address = 1;
 }
 
+extern volatile int bnep_failure;
+
 static void wait_for_dhcp(void) {
 	int n = 0;
-	while (!have_ip_address) {
+	while (!have_ip_address && !bnep_failure) {
 		link_callback(&bnep_netif);
 		status_callback(&bnep_netif);
 		if (n++ % 10 == 0) {
@@ -243,8 +245,8 @@ static void bt_loop(void *unused) {
 	gap_set_class_of_device(SERVICE_CLASS_NETWORKING | DEVICE_CLASS_LAN_NAP);
 	hci_add_event_handler(&hci_callback);
 	l2cap_init();
-	bnep_init();
 	sdp_init();
+	bnep_init();
 	bnep_interface_init();
 	hci_power_control(HCI_POWER_ON);
 	btstack_run_loop_execute();
