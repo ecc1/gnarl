@@ -33,5 +33,6 @@ int oled_string_width(const char *s);
 void oled_draw_string(int x, int y, const char *s);
 
 void oled_draw_box(int x, int y, int w, int h);
+void oled_draw_xbm(int x, int y, int w, int h, const uint8_t *bitmap);
 
 #endif // _OLED_H

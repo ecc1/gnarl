@@ -135,6 +135,10 @@ void oled_draw_box(int x, int y, int w, int h) {
 	u8g2_DrawBox(&u8g2, x, y, w, h);
 }
 
+void oled_draw_xbm(int x, int y, int w, int h, const uint8_t *bitmap) {
+	u8g2_DrawXBM(&u8g2, x, y, w, h, bitmap);
+}
+
 uint8_t i2c_callback(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
 uint8_t gpio_and_delay_callback(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
 
