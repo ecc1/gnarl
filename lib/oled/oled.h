@@ -4,34 +4,34 @@
 #define OLED_WIDTH	128
 #define OLED_HEIGHT	64
 
-extern void oled_init();
+void oled_init(void);
 
-extern void oled_on();
-extern void oled_off();
+void oled_on(void);
+void oled_off(void);
 
-extern void oled_clear();
-extern void oled_update();
+void oled_clear(void);
+void oled_update(void);
 
-extern int oled_font_width();
-extern int oled_font_ascent();
-extern int oled_font_descent();
+int oled_font_width(void);
+int oled_font_ascent(void);
+int oled_font_descent(void);
 
-extern void oled_font_small();
-extern void oled_font_medium();
-extern void oled_font_large();
+void oled_font_small(void);
+void oled_font_medium(void);
+void oled_font_large(void);
 
-extern void oled_font_sans_serif();
-extern void oled_font_serif();
-extern void oled_font_monospace();
+void oled_font_sans_serif(void);
+void oled_font_serif(void);
+void oled_font_monospace(void);
 
-extern void oled_align_left();
-extern void oled_align_right();
-extern void oled_align_center();
-extern void oled_align_center_both();
+void oled_align_left(void);
+void oled_align_right(void);
+void oled_align_center(void);
+void oled_align_center_both(void);
 
-extern int oled_string_width(const char *s);
-extern void oled_draw_string(int x, int y, const char *s);
+int oled_string_width(const char *s);
+void oled_draw_string(int x, int y, const char *s);
 
-extern void oled_draw_box(int x, int y, int w, int h);
+void oled_draw_box(int x, int y, int w, int h);
 
 #endif // _OLED_H

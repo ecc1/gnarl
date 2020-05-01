@@ -42,17 +42,23 @@ void oled_font_large(void) {
 
 static const uint8_t *font[NUM_STYLES][NUM_SIZES] = {
 	// sans-serif
-	{ u8g2_font_helvR08_tr,
-	  u8g2_font_helvR12_tr,
-	  u8g2_font_helvR24_tr },
+	{
+		u8g2_font_helvR08_tr,
+		u8g2_font_helvR12_tr,
+		u8g2_font_helvR24_tr,
+	},
 	// serif
-	{ u8g2_font_timR08_tr,
-	  u8g2_font_timR12_tr,
-	  u8g2_font_timR24_tr },
+	{
+		u8g2_font_lubR08_tr,
+		u8g2_font_lubR12_tr,
+		u8g2_font_lubR24_tr,
+	},
 	// monospace
-	{ u8g2_font_courR08_tr,
-	  u8g2_font_courR12_tr,
-	  u8g2_font_courR24_tr },
+	{
+		u8g2_font_courR08_tr,
+		u8g2_font_courR12_tr,
+		u8g2_font_courR24_tr,
+	},
 };
 
 static void set_font(void) {
@@ -129,8 +135,8 @@ void oled_draw_box(int x, int y, int w, int h) {
 	u8g2_DrawBox(&u8g2, x, y, w, h);
 }
 
-extern uint8_t i2c_callback(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
-extern uint8_t gpio_and_delay_callback(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
+uint8_t i2c_callback(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
+uint8_t gpio_and_delay_callback(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr);
 
 void oled_init(void) {
 	u8g2_Setup_ssd1306_i2c_128x64_noname_f(&u8g2, U8G2_R0, i2c_callback, gpio_and_delay_callback);
