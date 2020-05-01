@@ -101,11 +101,11 @@ DECLARE_SCHEDULE_LOOKUP(carb_ratio);
 DECLARE_SCHEDULE_LOOKUP(sensitivity);
 DECLARE_SCHEDULE_LOOKUP(target);
 
+// YYYY-MM-DD HH:MM:SS
 #define TIME_STRING_SIZE	20
 char *time_string(time_t t, char *buf);
 
-#define SHORT_TIME_SIZE	10
-char *short_time(time_t t, char *buf);
+char *format_time(time_t t, const char *fmt, char *buf, int len);
 
 #define DURATION_STRING_SIZE	20
 char *duration_string(int seconds, char *buf);

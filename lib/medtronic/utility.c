@@ -7,16 +7,13 @@ time_of_day_t since_midnight(time_t t) {
 	return tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec;
 }
 
-char *time_string(time_t t, char *buf) {
-	struct tm *tm = localtime(&t);
-	strftime(buf, TIME_STRING_SIZE, "%F %T", tm);
+char *format_time(time_t t, const char *fmt, char *buf, int len) {
+	strftime(buf, len, fmt, localtime(&t));
 	return buf;
 }
 
-char *short_time(time_t t, char *buf) {
-	struct tm *tm = localtime(&t);
-	strftime(buf, SHORT_TIME_SIZE, "%T", tm);
-	return buf;
+char *time_string(time_t t, char *buf) {
+	return format_time(t, "%F %T", buf, TIME_STRING_SIZE);
 }
 
 char *duration_string(int seconds, char *buf) {
