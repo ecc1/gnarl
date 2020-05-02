@@ -309,3 +309,46 @@ int pump_temp_basal(int *minutes) {
 	}
 	return two_byte_be_int(&data[3]) * 25;
 }
+
+#define MAX_BASAL	34000	// milliUnits
+
+uint16_t encode_basal_rate(insulin_t rate, int family) {
+	// Round the rate to the pump's delivery resolution.
+	assert(rate <= MAX_BASAL);
+	int res;
+	if (family <= 22) {
+		res = 50;
+	} else if (rate < 1000) {
+		res = 25;
+	} else if (rate < 10000) {
+		res = 50;
+	} else {
+		res = 100;
+	}
+	insulin_t actual = (rate / res) * res;
+	if (actual != rate) {
+		ESP_LOGI(TAG, "rounding basal rate from %d to %d", rate, actual);
+	}
+	// Encode the rounded value using 25 milliUnits/stroke.
+	return actual / 25;
+}
+
+int pump_set_temp_basal(int duration_mins, insulin_t rate) {
+	if (duration_mins % 30 != 0) {
+		ESP_LOGE(TAG, "temp basal duration (%d) must be a multiple of 30m", duration_mins);
+		return -1;
+	}
+	uint8_t half_hours = duration_mins / 30;
+	if (half_hours > 48) {
+		ESP_LOGE(TAG, "temp basal duration (%d) is longer than 24h", duration_mins);
+	}
+	if (rate > MAX_BASAL) {
+		ESP_LOGE(TAG, "temp basal rate (%d) is larger than %d", rate, MAX_BASAL);
+		return -1;
+	}
+	uint16_t strokes = encode_basal_rate(rate, pump_family());
+	uint8_t params[] = { strokes >> 8, strokes & 0xFF, half_hours };
+	int n;
+	long_command(CMD_SET_ABS_TEMP_BASAL, params, sizeof(params), &n);
+	return n;
+}

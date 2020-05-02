@@ -136,7 +136,7 @@ static int valid_response(command_t cmd, command_t resp, int n) {
 	return p->command == cmd || p->command == resp;
 }
 
-static uint8_t *perform(command_t cmd, uint8_t *pkt, int pkt_len, int tries, int rx_timeout, command_t exp_resp, int *result_len) {
+static uint8_t *perform(command_t cmd, uint8_t *pkt, int pkt_len, int tries, int rx_timeout, command_t exp_resp, int *result_lenp) {
 	if (pkt_len == sizeof(long_buf)) {
 		// Don't attempt state-changing commands more than once.
 		tries = 1;
@@ -150,25 +150,25 @@ static uint8_t *perform(command_t cmd, uint8_t *pkt, int pkt_len, int tries, int
 		}
 	}
 	if (n == 0) {
-		*result_len = NO_RESPONSE;
+		*result_lenp = NO_RESPONSE;
 		return 0;
 	}
 	n = decode_4b6b(rx_buf, response_buf, n);
 	if (n == -1) {
-		*result_len = DECODING_FAILURE;
+		*result_lenp = DECODING_FAILURE;
 		return 0;
 	}
 	uint8_t c = crc8(response_buf, n-1);
 	if (c != response_buf[n-1]) {
-		*result_len = CRC_FAILURE;
+		*result_lenp = CRC_FAILURE;
 		return 0;
 	}
 	n--; // discard CRC byte
 	if (!valid_response(cmd, exp_resp, n)) {
-		*result_len = INVALID_RESPONSE;
+		*result_lenp = INVALID_RESPONSE;
 		return 0;
 	}
-	*result_len = n - 5;
+	*result_lenp = n - 5;
 	return &response_buf[5];
 }
 
@@ -176,10 +176,10 @@ static uint8_t *perform(command_t cmd, uint8_t *pkt, int pkt_len, int tries, int
 #define DEFAULT_TIMEOUT	500 // milliseconds
 #define MAX_NAKS	10
 
-uint8_t *short_command(command_t cmd, int *len) {
+uint8_t *short_command(command_t cmd, int *lenp) {
 	encode_short_packet(cmd);
-	uint8_t *data = perform(cmd, short_buf, sizeof(short_buf), DEFAULT_TRIES, DEFAULT_TIMEOUT, cmd, len);
-	int n = *len;
+	uint8_t *data = perform(cmd, short_buf, sizeof(short_buf), DEFAULT_TRIES, DEFAULT_TIMEOUT, cmd, lenp);
+	int n = *lenp;
 	if (n < 0) {
 		log_error(cmd, n);
 		return 0;
@@ -187,10 +187,10 @@ uint8_t *short_command(command_t cmd, int *len) {
 	return data;
 }
 
-static uint8_t *acknowledge(command_t cmd, int *len) {
+static uint8_t *acknowledge(command_t cmd, int *lenp) {
 	encode_short_packet(CMD_ACK);
-	uint8_t *data = perform(CMD_ACK, short_buf, sizeof(short_buf), 1, DEFAULT_TIMEOUT, cmd, len);
-	int n = *len;
+	uint8_t *data = perform(CMD_ACK, short_buf, sizeof(short_buf), 1, DEFAULT_TIMEOUT, cmd, lenp);
+	int n = *lenp;
 	if (n < 0) {
 		log_error(cmd, n);
 		return 0;
@@ -205,7 +205,7 @@ typedef struct {
 
 static uint8_t page_buf[1024];
 
-uint8_t *extended_response(command_t cmd, int *len) {
+uint8_t *extended_response(command_t cmd, int *lenp) {
 	int n;
 	int expected = 1;
 	uint8_t *p = page_buf;
@@ -219,7 +219,7 @@ uint8_t *extended_response(command_t cmd, int *len) {
 		memcpy(p, data + 1, PAYLOAD_LENGTH);
 		p += PAYLOAD_LENGTH;
 		if (data[0] & DONE_BIT) {
-			*len = seq_num * PAYLOAD_LENGTH;
+			*lenp = seq_num * PAYLOAD_LENGTH;
 			return page_buf;
 		}
 		// Acknowledge this fragment and receive the next.
@@ -233,23 +233,23 @@ uint8_t *extended_response(command_t cmd, int *len) {
 		print_bytes("response", data, n);
 		n = -1;
 	}
-	*len = n;
+	*lenp = n;
 	return 0;
 }
 
-uint8_t *check_page_crc(int page_num, int *len) {
+uint8_t *check_page_crc(int page_num, int *lenp) {
 	uint16_t data_crc = two_byte_be_int(&page_buf[1022]);
 	uint16_t calc_crc = crc16(page_buf, 1022);
 	if (calc_crc != data_crc) {
-		*len = -1;
+		*lenp = -1;
 		ESP_LOGE(TAG, "history page %d: computed CRC %04X but received %04X", page_num, calc_crc, data_crc);
 		return 0;
 	}
-	*len = HISTORY_PAGE_SIZE;
+	*lenp = HISTORY_PAGE_SIZE;
 	return page_buf;
 }
 
-uint8_t *handle_no_response(command_t cmd, int page_num, int expected, int *len) {
+uint8_t *handle_no_response(command_t cmd, int page_num, int expected, int *lenp) {
 	for (int count = 0; count < MAX_NAKS; count++) {
 		encode_short_packet(CMD_NAK);
 		int n;
@@ -258,7 +258,7 @@ uint8_t *handle_no_response(command_t cmd, int page_num, int expected, int *len)
 			if (n == NO_RESPONSE) {
 				continue;
 			}
-			*len = -1;
+			*lenp = -1;
 			log_error(cmd, n);
 			return 0;
 		}
@@ -266,30 +266,27 @@ uint8_t *handle_no_response(command_t cmd, int page_num, int expected, int *len)
 		ESP_LOGI(TAG, "history page %d: received fragment %d after %d NAK(s)", page_num, seq_num, count + 1);
 		return data;
 	}
-	*len = -1;
+	*lenp = -1;
 	ESP_LOGE(TAG, "history page %d: lost fragment %d", page_num, expected);
 	return 0;
 }
 
-uint8_t *download_page(command_t cmd, int page_num, int *len) {
-	encode_short_packet(cmd);
+uint8_t *download_page(command_t cmd, int page_num, int *lenp) {
+	uint8_t pg = page_num;
 	int n;
-	uint8_t *data = perform(cmd, short_buf, sizeof(short_buf), DEFAULT_TRIES, DEFAULT_TIMEOUT, CMD_ACK, &n);
+	uint8_t *data = long_command(cmd, &pg, 1, &n);
 	if (n < 0) {
-		*len = n;
+		*lenp = n;
 		log_error(cmd, n);
 		return 0;
 	}
-	int expected = 1;
 	uint8_t *p = page_buf;
-	uint8_t pg = page_num;
-	encode_long_packet(cmd, &pg, sizeof(pg));
-	data = perform(cmd, long_buf, sizeof(long_buf), DEFAULT_TRIES, 2*DEFAULT_TIMEOUT, CMD_ACK, &n);
+	int expected = 1;
 	while (data != 0 && n == FRAGMENT_LENGTH) {
 		uint8_t seq_num = data[0] & ~DONE_BIT;
 		if (seq_num > expected) {
 			// Missed fragment.
-			*len = -1;
+			*lenp = -1;
 			ESP_LOGE(TAG, "history page %d: received fragment %d instead of %d", page_num, seq_num, expected);
 			return 0;
 		}
@@ -300,11 +297,11 @@ uint8_t *download_page(command_t cmd, int page_num, int *len) {
 		}
 		if (seq_num == NUM_FRAGMENTS) {
 			if (!(data[0] & DONE_BIT)) {
-				*len = -1;
+				*lenp = -1;
 				ESP_LOGE(TAG, "history page %d: missing done bit", page_num);
 				return 0;
 			}
-			return check_page_crc(page_num, len);
+			return check_page_crc(page_num, lenp);
 		}
 		// Acknowledge this fragment and receive the next.
 		data = acknowledge(cmd, &n);
@@ -323,7 +320,7 @@ uint8_t *download_page(command_t cmd, int page_num, int *len) {
 		print_bytes("response", data, n);
 		n = -1;
 	}
-	*len = n;
+	*lenp = n;
 	return 0;
 }
 
@@ -337,4 +334,22 @@ bool pump_wakeup(void) {
 	perform(CMD_WAKEUP, short_buf, sizeof(short_buf), 100, 10, CMD_ACK, &n);
 	uint8_t *data = perform(CMD_WAKEUP, short_buf, sizeof(short_buf), 1, 10000, CMD_ACK, &n);
 	return data != 0;
+}
+
+uint8_t *long_command(command_t cmd, uint8_t *params, int params_len, int *lenp) {
+	encode_short_packet(cmd);
+	uint8_t *data = perform(cmd, short_buf, sizeof(short_buf), DEFAULT_TRIES, DEFAULT_TIMEOUT, CMD_ACK, lenp);
+	int n = *lenp;
+	if (n < 0) {
+		log_error(cmd, n);
+		ESP_LOGE(TAG, "command %02X was not performed", cmd);
+		return 0;
+	}
+	encode_long_packet(cmd, params, params_len);
+	data = perform(cmd, long_buf, sizeof(long_buf), 1, DEFAULT_TIMEOUT, CMD_ACK, lenp);
+	if (!data) {
+		log_error(cmd, n);
+		return 0;
+	}
+	return data;
 }

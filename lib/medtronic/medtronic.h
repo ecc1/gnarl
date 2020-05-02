@@ -90,6 +90,7 @@ int pump_status(status_t *r);
 int pump_targets(target_t *r, int len);
 int pump_temp_basal(int *minutes);
 bool pump_wakeup(void);
+int pump_set_temp_basal(int duration_mins, insulin_t rate);
 
 time_of_day_t since_midnight(time_t t);
 time_t next_change(basal_rate_t *schedule, int len, time_t t);
