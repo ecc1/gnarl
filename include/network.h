@@ -8,9 +8,15 @@ char *gateway_address(void);
 void tether_init(void);
 #define network_init	tether_init
 
+void tether_off(void);
+#define network_off	tether_off
+
 #else
 
 void wifi_init(void);
 #define network_init	wifi_init
+
+void wifi_off(void);
+#define network_off	wifi_off
 
 #endif

@@ -256,3 +256,7 @@ void tether_init(void) {
 	xTaskCreate(bt_loop, "bt_loop", 4096, 0, tskIDLE_PRIORITY + 10, 0);
 	wait_for_dhcp();
 }
+
+void tether_off(void) {
+	bnep_disconnect(bt_tether_addr);
+}

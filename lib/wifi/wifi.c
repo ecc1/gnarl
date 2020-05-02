@@ -88,6 +88,9 @@ void wifi_init(void) {
 	}
 }
 
+void wifi_off(void) {
+}
+
 static char addr[20];
 static esp_netif_ip_info_t ip_info;
 
