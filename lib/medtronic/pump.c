@@ -16,14 +16,14 @@ static inline glucose_t int_to_glucose(int n, glucose_units_t units) {
 
 static int cached_pump_family;
 
-int pump_family(void) {
+int pump_get_family(void) {
 	if (cached_pump_family == 0) {
-		pump_model();
+		pump_get_model();
 	}
 	return cached_pump_family;
 }
 
-int pump_basal_rates(basal_rate_t *r, int len) {
+int pump_get_basal_rates(basal_rate_t *r, int len) {
 	int n;
 	uint8_t *data = extended_response(CMD_BASAL_RATES, &n);
 	int count = 0;
@@ -40,7 +40,7 @@ int pump_basal_rates(basal_rate_t *r, int len) {
 	return count;
 }
 
-int pump_battery(void) {
+int pump_get_battery(void) {
 	int n;
 	uint8_t *data = short_command(CMD_BATTERY, &n);
 	if (!data || n < 4 || data[0] != 3) {
@@ -49,23 +49,23 @@ int pump_battery(void) {
 	return two_byte_be_int(&data[2]) * 10;
 }
 
-int pump_carb_ratios(carb_ratio_t *r, int len) {
+int pump_get_carb_ratios(carb_ratio_t *r, int len) {
 	// Call this before the main command so the response buffer isn't overwritten.
-	int fam = pump_family();
+	int fam = pump_get_family();
 	int n;
 	uint8_t *data = short_command(CMD_CARB_RATIOS, &n);
 	if (!data || n < 2) {
-		ESP_LOGE(TAG, "pump_carb_ratios: data %p length %d", data, n);
+		ESP_LOGE(TAG, "pump_get_carb_ratios: data %p length %d", data, n);
 		return 0;
 	}
 	int step = fam <= 22 ? 2 : 3;
 	int num = data[0] - 1;
 	if (step + num >= n) {
-		ESP_LOGE(TAG, "pump_carb_ratios: invalid length field (%d) for %d-byte packet", num, n);
+		ESP_LOGE(TAG, "pump_get_carb_ratios: invalid length field (%d) for %d-byte packet", num, n);
 		return 0;
 	}
 	if (num % step != 0) {
-		ESP_LOGE(TAG, "pump_carb_ratios: length field (%d) not divisible by %d", num, step);
+		ESP_LOGE(TAG, "pump_get_carb_ratios: length field (%d) not divisible by %d", num, step);
 		return 0;
 	}
 	carb_units_t units = data[1];
@@ -88,7 +88,7 @@ int pump_carb_ratios(carb_ratio_t *r, int len) {
 				r->ratio = 100 * v;
 				break;
 			default:
-				ESP_LOGE(TAG, "pump_carb_ratios: unknown carb unit %d", units);
+				ESP_LOGE(TAG, "pump_get_carb_ratios: unknown carb unit %d", units);
 				return 0;
 			}
 		} else {
@@ -98,7 +98,7 @@ int pump_carb_ratios(carb_ratio_t *r, int len) {
 	return count;
 }
 
-carb_units_t pump_carb_units(void) {
+carb_units_t pump_get_carb_units(void) {
 	int n;
 	uint8_t *data = short_command(CMD_CARB_UNITS, &n);
 	if (!data || n < 2 || data[0] != 1) {
@@ -107,7 +107,7 @@ carb_units_t pump_carb_units(void) {
 	return data[1];
 }
 
-time_t pump_clock(void) {
+time_t pump_get_clock(void) {
 	int n;
 	uint8_t *data = short_command(CMD_CLOCK, &n);
 	if (!data || n < 8 || data[0] != 7) {
@@ -125,7 +125,7 @@ time_t pump_clock(void) {
 	return mktime(&tm);
 }
 
-glucose_units_t pump_glucose_units(void) {
+glucose_units_t pump_get_glucose_units(void) {
 	int n;
 	uint8_t *data = short_command(CMD_GLUCOSE_UNITS, &n);
 	if (!data || n < 2 || data[0] != 1) {
@@ -134,17 +134,17 @@ glucose_units_t pump_glucose_units(void) {
 	return data[1];
 }
 
-uint8_t *pump_history_page(int page_num) {
+uint8_t *pump_get_history_page(int page_num) {
 	int n;
 	uint8_t *data = download_page(CMD_HISTORY, page_num, &n);
 	if (data == 0 || n != HISTORY_PAGE_SIZE) {
-		ESP_LOGE(TAG, "pump_history_page: data %p length %d", data, n);
+		ESP_LOGE(TAG, "pump_get_history_page: data %p length %d", data, n);
 		return 0;
 	}
 	return data;
 }
 
-int pump_model(void) {
+int pump_get_model(void) {
 	int n;
 	uint8_t *data = short_command(CMD_MODEL, &n);
 	if (!data || n < 2) {
@@ -162,9 +162,9 @@ int pump_model(void) {
 	return model;
 }
 
-int pump_reservoir(void) {
+int pump_get_reservoir(void) {
 	// Call this before the main command so the response buffer isn't overwritten.
-	int fam = pump_family();
+	int fam = pump_get_family();
 	int n;
 	uint8_t *data = short_command(CMD_RESERVOIR, &n);
 	if (!data) {
@@ -182,20 +182,20 @@ int pump_reservoir(void) {
 	return two_byte_be_int(&data[3]) * 25;
 }
 
-int pump_sensitivities(sensitivity_t *r, int len) {
+int pump_get_sensitivities(sensitivity_t *r, int len) {
 	int n;
 	uint8_t *data = short_command(CMD_SENSITIVITIES, &n);
 	if (!data || n < 2) {
-		ESP_LOGE(TAG, "pump_sensitivities: data %p length %d", data, n);
+		ESP_LOGE(TAG, "pump_get_sensitivities: data %p length %d", data, n);
 		return 0;
 	}
 	int num = data[0] - 1;
 	if (2 + num >= n) {
-		ESP_LOGE(TAG, "pump_sensitivities: invalid length field (%d) for %d-byte packet", num, n);
+		ESP_LOGE(TAG, "pump_get_sensitivities: invalid length field (%d) for %d-byte packet", num, n);
 		return 0;
 	}
 	if (num % 2 != 0) {
-		ESP_LOGE(TAG, "pump_sensitivities: length field (%d) not divisible by 2", num);
+		ESP_LOGE(TAG, "pump_get_sensitivities: length field (%d) not divisible by 2", num);
 		return 0;
 	}
 	glucose_units_t units = data[1];
@@ -215,9 +215,9 @@ int pump_sensitivities(sensitivity_t *r, int len) {
 	return count;
 }
 
-int pump_settings(settings_t *r) {
+int pump_get_settings(settings_t *r) {
 	// Call this before the main command so the response buffer isn't overwritten.
-	int fam = pump_family();
+	int fam = pump_get_family();
 	command_t cmd = fam <= 12 ? CMD_SETTINGS_512 : CMD_SETTINGS;
 	int n;
 	uint8_t *data = short_command(cmd, &n);
@@ -248,7 +248,7 @@ int pump_settings(settings_t *r) {
 	return 0;
 }
 
-int pump_status(status_t *r) {
+int pump_get_status(status_t *r) {
 	int n;
 	uint8_t *data = short_command(CMD_STATUS, &n);
 	if (!data || n < 4 || data[0] != 3) {
@@ -260,24 +260,24 @@ int pump_status(status_t *r) {
 	return 0;
 }
 
-int pump_targets(target_t *r, int len) {
+int pump_get_targets(target_t *r, int len) {
 	// Call this before the main command so the response buffer isn't overwritten.
-	int fam = pump_family();
+	int fam = pump_get_family();
 	command_t cmd = fam <= 12 ? CMD_TARGETS_512 : CMD_TARGETS;
 	int n;
 	uint8_t *data = short_command(cmd, &n);
 	if (!data || n < 2) {
-		ESP_LOGE(TAG, "pump_targets: data %p length %d", data, n);
+		ESP_LOGE(TAG, "pump_get_targets: data %p length %d", data, n);
 		return 0;
 	}
 	int step = fam <= 12 ? 2 : 3;
 	int num = data[0] - 1;
 	if (step + num >= n) {
-		ESP_LOGE(TAG, "pump_targets: invalid length field (%d) for %d-byte packet", num, n);
+		ESP_LOGE(TAG, "pump_get_targets: invalid length field (%d) for %d-byte packet", num, n);
 		return 0;
 	}
 	if (num % step != 0) {
-		ESP_LOGE(TAG, "pump_targets: length field (%d) not divisible by %d", num, step);
+		ESP_LOGE(TAG, "pump_get_targets: length field (%d) not divisible by %d", num, step);
 		return 0;
 	}
 	glucose_units_t units = data[1];
@@ -296,7 +296,7 @@ int pump_targets(target_t *r, int len) {
 	return count;
 }
 
-int pump_temp_basal(int *minutes) {
+int pump_get_temp_basal(int *minutes) {
 	int n;
 	uint8_t *data = short_command(CMD_TEMP_BASAL, &n);
 	if (!data || n < 7 || data[0] != 6) {
@@ -304,7 +304,7 @@ int pump_temp_basal(int *minutes) {
 	}
 	*minutes = two_byte_be_int(&data[5]);
 	if (data[1] != 0) {
-		ESP_LOGE(TAG, "pump_temp_basal: unsupported %d percent rate", data[2]);
+		ESP_LOGE(TAG, "pump_get_temp_basal: unsupported %d percent rate", data[2]);
 		return 0;
 	}
 	return two_byte_be_int(&data[3]) * 25;
@@ -346,7 +346,7 @@ int pump_set_temp_basal(int duration_mins, insulin_t rate) {
 		ESP_LOGE(TAG, "temp basal rate (%d) is larger than %d", rate, MAX_BASAL);
 		return -1;
 	}
-	uint16_t strokes = encode_basal_rate(rate, pump_family());
+	uint16_t strokes = encode_basal_rate(rate, pump_get_family());
 	uint8_t params[] = { strokes >> 8, strokes & 0xFF, half_hours };
 	int n;
 	long_command(CMD_SET_ABS_TEMP_BASAL, params, sizeof(params), &n);

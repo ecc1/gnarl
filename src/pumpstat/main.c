@@ -20,13 +20,13 @@ void get_pump_info(void) {
 		model = -1;
 		return;
 	}
-	model = pump_model();
+	model = pump_get_model();
 	printf("model %d\n", model);
-	battery_level = pump_battery();
+	battery_level = pump_get_battery();
 	printf("battery %d\n", battery_level);
-	reservoir_level = pump_reservoir();
+	reservoir_level = pump_get_reservoir();
 	printf("reservoir %d\n", reservoir_level);
-	basal_rate = pump_temp_basal(&basal_minutes);
+	basal_rate = pump_get_temp_basal(&basal_minutes);
 	printf("temp basal %d for %d min\n", basal_rate, basal_minutes);
 }
 

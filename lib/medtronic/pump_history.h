@@ -105,13 +105,13 @@ typedef enum PACKED {
 	EmptyReservoir          = 0x3E,
 } alarm_code_t;
 
-time_t decode_time(uint8_t *data);
+time_t pump_decode_time(uint8_t *data);
 
 // Signature of function to be applied to history records during decoding.
 typedef int (*history_record_fn_t)(history_record_t *);
 
 // Decode the given history page and apply f to each insulin-related record.
 // If f returns a non-zero value, the decoding loop terminates.
-void decode_history(uint8_t *page, int len, int family, history_record_fn_t decode_fn);
+void pump_decode_history(uint8_t *page, int len, int family, history_record_fn_t decode_fn);
 
 #endif // _PUMP_HISTORY_H

@@ -19,7 +19,7 @@ int try_frequency(uint32_t frequency) {
 		printf("wakeup failed\n");
 		return -128;
 	}
-	model = pump_model();
+	model = pump_get_model();
 	printf("model %d\n", model);
 	rssi = read_rssi();
 	printf("rssi %d\n", rssi);
@@ -92,7 +92,7 @@ void app_main(void) {
 	oled_align_left();
 	sprintf(str, "Best RSSI: %d", best_rssi);
 	oled_draw_string(0, 20, str);
-	sprintf(str, "Best Frq: %d.%03d", FP_FQ(best_freq));
+	sprintf(str, "Best Freq: %d.%03d", FP_FQ(best_freq));
 	oled_draw_string(0, 40, str);
 	usleep(100);
 	oled_update();

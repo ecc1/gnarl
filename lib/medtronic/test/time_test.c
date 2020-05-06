@@ -21,11 +21,11 @@ void test_decode_time(void) {
 	for (int i = 0; i < NUM_DECODE_TIME_CASES; i++) {
 		decode_time_case_t *c = &decode_time_cases[i];
 		uint8_t *bytes = parse_bytes(c->byte_str);
-		time_t t = decode_time(bytes);
+		time_t t = pump_decode_time(bytes);
 		char ts[TIME_STRING_SIZE];
 		time_string(t, ts);
 		if (strcmp(ts, c->time_str) != 0) {
-			test_failed("[%d] decode_time(%s) = %s, want %s", i, c->byte_str, ts, c->time_str);
+			test_failed("[%d] pump_decode_time(%s) = %s, want %s", i, c->byte_str, ts, c->time_str);
 		}
 	}
 }

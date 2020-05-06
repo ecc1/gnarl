@@ -17,9 +17,9 @@ void get_time(void) {
 		printf("pump_wakeup() failed\n");
 		return;
 	}
-	pump_time = pump_clock();
+	pump_time = pump_get_clock();
 	if (pump_time == -1) {
-		printf("pump_clock() failed\n");
+		printf("pump_get_clock() failed\n");
 		return;
 	}
 	struct timeval tv = { .tv_sec = pump_time };

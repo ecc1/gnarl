@@ -325,7 +325,7 @@ uint8_t *download_page(command_t cmd, int page_num, int *lenp) {
 }
 
 bool pump_wakeup(void) {
-	int m = pump_model();
+	int m = pump_get_model();
 	if (m != -1) {
 		return true;
 	}

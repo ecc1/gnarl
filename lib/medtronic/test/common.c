@@ -21,6 +21,6 @@ void parse_data(char *filename, int family) {
 	static uint8_t page[HISTORY_PAGE_SIZE];
 	int nbytes = read_bytes(f, page, sizeof(page));
 	history_length = 0;
-	decode_history(page, nbytes, family, store_record);
+	pump_decode_history(page, nbytes, family, store_record);
 	assert(history_length < LEN(history));
 }

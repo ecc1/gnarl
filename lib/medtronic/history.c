@@ -5,7 +5,7 @@
 #include "pump_history.h"
 
 // Decode a 5-byte timestamp from a pump history record.
-time_t decode_time(uint8_t *data) {
+time_t pump_decode_time(uint8_t *data) {
 	struct tm tm = {
 		.tm_sec = data[0] & 0x3F,
 		.tm_min = data[1] & 0x3F,
@@ -43,23 +43,23 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 	case Bolus:
 		if (family <= 22) {
 			REQUIRE_BYTES(9);
-			r->time = decode_time(&data[4]);
+			r->time = pump_decode_time(&data[4]);
 			r->insulin = int_to_insulin(data[2], family);
 			r->duration = half_hours(data[3]);
 		} else {
 			REQUIRE_BYTES(13);
-			r->time = decode_time(&data[8]);
+			r->time = pump_decode_time(&data[8]);
 			r->insulin = int_to_insulin(two_byte_be_int(&data[3]), family);
 			r->duration = half_hours(data[7]);
 		}
 		return 1;
 	case Prime:
 		REQUIRE_BYTES(10);
-		r->time = decode_time(&data[5]);
+		r->time = pump_decode_time(&data[5]);
 		return 1;
 	case Alarm:
 		REQUIRE_BYTES(9);
-		r->time = decode_time(&data[4]);
+		r->time = pump_decode_time(&data[4]);
 		// Use insulin field to store alarm code.
 		r->insulin = data[1];
 		return 1;
@@ -80,14 +80,14 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 		return 0;
 	case ClearAlarm:
 		REQUIRE_BYTES(7);
-		r->time = decode_time(&data[2]);
+		r->time = pump_decode_time(&data[2]);
 		return 1;
 	case ChangeBasalPattern:
 		REQUIRE_BYTES(7);
 		return 0;
 	case TempBasalDuration:
 		REQUIRE_BYTES(7);
-		r->time = decode_time(&data[2]);
+		r->time = pump_decode_time(&data[2]);
 		r->duration = half_hours(data[1]);
 		return 1;
 	case ChangeTime:
@@ -110,18 +110,18 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 		return 0;
 	case SuspendPump:
 		REQUIRE_BYTES(7);
-		r->time = decode_time(&data[2]);
+		r->time = pump_decode_time(&data[2]);
 		return 1;
 	case ResumePump:
 		REQUIRE_BYTES(7);
-		r->time = decode_time(&data[2]);
+		r->time = pump_decode_time(&data[2]);
 		return 1;
 	case SelfTest:
 		REQUIRE_BYTES(7);
 		return 0;
 	case Rewind:
 		REQUIRE_BYTES(7);
-		r->time = decode_time(&data[2]);
+		r->time = pump_decode_time(&data[2]);
 		return 1;
 	case ClearSettings:
 		REQUIRE_BYTES(7);
@@ -158,7 +158,7 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 		return 0;
 	case TempBasalRate:
 		REQUIRE_BYTES(8);
-		r->time = decode_time(&data[2]);
+		r->time = pump_decode_time(&data[2]);
 		switch (data[7] >> 3) { // temp basal type
 		case ABSOLUTE:
 			r->insulin = int_to_insulin(((data[7] & 0x7) << 8) | data[1], 23);
@@ -304,7 +304,7 @@ static int decode_history_record(uint8_t *data, int len, int family, history_rec
 		return 0;
 	case BasalProfileStart:
 		REQUIRE_BYTES(10);
-		r->time = decode_time(&data[2]);
+		r->time = pump_decode_time(&data[2]);
 		// data[7] = starting half-hour
 		r->insulin = int_to_insulin(two_byte_le_int(&data[8]), 23);
 		return 1;
@@ -345,7 +345,7 @@ void print_bytes(const char *msg, const uint8_t *data, int len) {
 	printf("\n");
 }
 
-void decode_history(uint8_t *page, int len, int family, history_record_fn_t decode_fn) {
+void pump_decode_history(uint8_t *page, int len, int family, history_record_fn_t decode_fn) {
 	uint8_t *data = page;
 	history_record_t rec;
 	while (len > 0) {
