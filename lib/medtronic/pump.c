@@ -162,7 +162,7 @@ int pump_get_model(void) {
 	return model;
 }
 
-int pump_get_reservoir(void) {
+insulin_t pump_get_reservoir(void) {
 	// Call this before the main command so the response buffer isn't overwritten.
 	int fam = pump_get_family();
 	int n;
@@ -296,7 +296,7 @@ int pump_get_targets(target_t *r, int len) {
 	return count;
 }
 
-int pump_get_temp_basal(int *minutes) {
+insulin_t pump_get_temp_basal(int *minutes) {
 	int n;
 	uint8_t *data = short_command(CMD_TEMP_BASAL, &n);
 	if (!data || n < 7 || data[0] != 6) {
@@ -349,6 +349,5 @@ int pump_set_temp_basal(int duration_mins, insulin_t rate) {
 	uint16_t strokes = encode_basal_rate(rate, pump_get_family());
 	uint8_t params[] = { strokes >> 8, strokes & 0xFF, half_hours };
 	int n;
-	long_command(CMD_SET_ABS_TEMP_BASAL, params, sizeof(params), &n);
-	return n;
+	return long_command(CMD_SET_ABS_TEMP_BASAL, params, sizeof(params), &n) ? 0 : -1;
 }

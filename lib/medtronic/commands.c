@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "medtronic.h"
 #include "4b6b.h"
 #include "commands.h"
@@ -17,12 +19,14 @@
 #define INVALID_RESPONSE	-4
 
 static void log_error(command_t cmd, int n) {
+	char buf[20];
 	const char *msg;
 	switch (n) {
 	case 0:
 		msg = "empty packet";
 		break;
 	case NO_RESPONSE:
+		// These are too common to log.
 		return;
 	case DECODING_FAILURE:
 		msg = "decoding failure";
@@ -34,8 +38,9 @@ static void log_error(command_t cmd, int n) {
 		msg = "invalid response";
 		break;
 	default:
-		ESP_LOGE(TAG, "command %02X: error %d", cmd, n);
-		return;
+		sprintf(buf, "error %d", n);
+		msg = buf;
+		break;
 	}
 	ESP_LOGE(TAG, "command %02X: %s", cmd, msg);
 }
@@ -141,35 +146,37 @@ static uint8_t *perform(command_t cmd, uint8_t *pkt, int pkt_len, int tries, int
 		// Don't attempt state-changing commands more than once.
 		tries = 1;
 	}
-	int n = 0;
+	int err = 0;
 	for (int t = 0; t < tries; t++) {
 		transmit(pkt, pkt_len);
-		n = receive(rx_buf, sizeof(rx_buf), rx_timeout);
-		if (n != 0) {
-			break;
+		int n = receive(rx_buf, sizeof(rx_buf), rx_timeout);
+		if (n == 0) {
+			err = NO_RESPONSE;
+			continue;
 		}
+		n = decode_4b6b(rx_buf, response_buf, n);
+		if (n == -1) {
+			err = DECODING_FAILURE;
+			continue;
+		}
+		uint8_t c = crc8(response_buf, n-1);
+		if (c != response_buf[n-1]) {
+			err = CRC_FAILURE;
+			continue;
+		}
+		n--; // discard CRC byte
+		if (!valid_response(cmd, exp_resp, n)) {
+			err = INVALID_RESPONSE;
+			break;
+		};
+		if (t != 0) {
+			ESP_LOGE(TAG, "command %02X required %d tries", cmd, t+1);
+		}
+		*result_lenp = n - 5;
+		return &response_buf[5];
 	}
-	if (n == 0) {
-		*result_lenp = NO_RESPONSE;
-		return 0;
-	}
-	n = decode_4b6b(rx_buf, response_buf, n);
-	if (n == -1) {
-		*result_lenp = DECODING_FAILURE;
-		return 0;
-	}
-	uint8_t c = crc8(response_buf, n-1);
-	if (c != response_buf[n-1]) {
-		*result_lenp = CRC_FAILURE;
-		return 0;
-	}
-	n--; // discard CRC byte
-	if (!valid_response(cmd, exp_resp, n)) {
-		*result_lenp = INVALID_RESPONSE;
-		return 0;
-	}
-	*result_lenp = n - 5;
-	return &response_buf[5];
+	*result_lenp = err ? err : NO_RESPONSE;
+	return 0;
 }
 
 #define DEFAULT_TRIES	3
@@ -254,7 +261,7 @@ uint8_t *handle_no_response(command_t cmd, int page_num, int expected, int *lenp
 		encode_short_packet(CMD_NAK);
 		int n;
 		uint8_t *data = perform(CMD_NAK, short_buf, sizeof(short_buf), 1, DEFAULT_TIMEOUT, cmd, &n);
-		if (n <= 0) {
+		if (n < 0) {
 			if (n == NO_RESPONSE) {
 				continue;
 			}
