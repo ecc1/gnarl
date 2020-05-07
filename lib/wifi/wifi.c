@@ -12,7 +12,7 @@
 
 #define MAX_RETRIES  		5
 #define RETRY_INTERVAL		100	// milliseconds
-#define IP_TIMEOUT		10000	// milliseconds
+#define IP_TIMEOUT		15000	// milliseconds
 
 static esp_netif_t *wifi_interface;
 static int retry_num;
