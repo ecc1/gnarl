@@ -21,10 +21,10 @@ typedef enum PACKED {
 } glucose_units_t;
 
 // Glucose is represented in mg/dL.
-typedef uint32_t glucose_t;
+typedef int glucose_t;
 
 // The time of day is represented as seconds since midnight.
-typedef uint32_t time_of_day_t;
+typedef int time_of_day_t;
 
 typedef enum PACKED {
 	ABSOLUTE = 0,
@@ -32,7 +32,7 @@ typedef enum PACKED {
 } temp_basal_type_t;
 
 // Insulin is represented in milliUnits.
-typedef uint32_t insulin_t;
+typedef int insulin_t;
 
 typedef struct {
 	uint8_t dia; // hours
