@@ -1,8 +1,8 @@
 #include "testing.h"
 
-char *test_dir = "./testdata";
+static char *test_data_dir = "./testdata";
 
-char *test_files[] = {
+static char *test_files[] = {
 	"model-512-1",
 	"model-512-2",
 	"model-515",
@@ -29,7 +29,7 @@ char *test_files[] = {
 };
 #define NUM_TEST_FILES	(sizeof(test_files)/sizeof(test_files[0]))
 
-char *get_test_file(char *name, int *familyp) {
+static char *get_data_file(char *name, int *familyp) {
 	static char buf[50];
 	strcpy(buf, strchr(name, '-') + 1);
 	char *t = strchr(buf, '-');
@@ -37,16 +37,21 @@ char *get_test_file(char *name, int *familyp) {
 		*t = 0;
 	}
 	*familyp = atoi(buf) % 100;
-	sprintf(buf, "%s/%s.data", test_dir, name);
+	sprintf(buf, "%s/%s.data", test_data_dir, name);
 	return buf;
 }
 
-void run_test(char *name) {
+static char *get_json_file(char *name) {
+	static char buf[50];
+	sprintf(buf, "%s/%s.json", test_data_dir, name);
+	return buf;
+}
+
+static void run_test(char *name) {
 	int family;
-	char *filename = get_test_file(name, &family);
-	parse_data(filename, family);
-	static char json_file[50];
-	sprintf(json_file, "%s/%s.json", test_dir, name);
+	char *data_file = get_data_file(name, &family);
+	char *json_file = get_json_file(name);
+	parse_data(data_file, family);
 	compare_with_json(json_file);
 }
 

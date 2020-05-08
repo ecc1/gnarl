@@ -330,7 +330,7 @@ uint8_t *download_page(command_t cmd, int page_num, int *len) {
 	return 0;
 }
 
-int pump_wakeup() {
+int pump_wakeup(void) {
 	int m = pump_model();
 	if (m != -1) {
 		return 1;

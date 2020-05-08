@@ -116,6 +116,25 @@ void test_failed(const char *format, ...) {
 	va_end(ap);
 }
 
-void exit_test() {
+void exit_test(void) {
 	exit(test_failures);
+}
+
+#define MAX_FILE_SIZE	32768
+
+char *read_file(const char *name) {
+	static char buf[MAX_FILE_SIZE];
+	FILE *f = fopen(name, "r");
+	assert(f != NULL);
+	int i = 0;
+	for (;;) {
+		assert(i < sizeof(buf)-1);
+		int n = fread(&buf[i], 1, sizeof(buf)-1-i, f);
+		if (n == 0) {
+			break;
+		}
+		i += n;
+	}
+	buf[i] = '\0';
+	return buf;
 }

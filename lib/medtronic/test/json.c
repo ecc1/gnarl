@@ -1,28 +1,28 @@
-#include <jansson.h>
+#include <cJSON.h>
 
 #include "testing.h"
 
-static json_t *json_object_path(json_t *obj, const char *path) {
+static cJSON *object_path(cJSON *obj, const char *path) {
 	char buf[20];
 	for (;;) {
 		char *p = strchr(path, '.');
 		if (p == 0) {
-			return json_object_get(obj, path);
+			return cJSON_GetObjectItem(obj, path);
 		}
 		int n = p - path;
 		strncpy(buf, path, n);
 		buf[n] = 0;
-		obj = json_object_get(obj, buf);
+		obj = cJSON_GetObjectItem(obj, buf);
 		path = p + 1;
 	}
 }
 
-static time_t json_time_value(json_t *t) {
-	return parse_json_time(json_string_value(t));
+static time_t json_time_value(cJSON *t) {
+	return parse_json_time(t->valuestring);
 }
 
-static time_t json_duration_value(json_t *t) {
-	return parse_duration(json_string_value(t));
+static time_t json_duration_value(cJSON *t) {
+	return parse_duration(t->valuestring);
 }
 
 static const uint8_t decode_table[256] = {
@@ -45,21 +45,21 @@ static const uint8_t decode_table[256] = {
 };
 
 // Decode the first byte of a base64-encoded string.
-static uint8_t json_data0_value(json_t *d) {
-	const char *s = json_string_value(d);
+static uint8_t json_data0_value(cJSON *d) {
+	const char *s = d->valuestring;
 	uint8_t a = s[0], b = s[1];
 	return (decode_table[a] << 2) | (decode_table[b] >> 4);
 }
 
 // Find record with matching timestamp and type.
-static history_record_t *find_object(json_t *obj) {
-	json_t *jt = json_object_get(obj, "Time");
-	if (jt == 0) {
+static history_record_t *find_object(cJSON *obj) {
+	cJSON *jt = cJSON_GetObjectItem(obj, "Time");
+	if (!jt) {
 		// All records of interest have time stamps.
 		return 0;
 	}
 	time_t t = json_time_value(jt);
-	history_record_type_t type = json_data0_value(json_object_get(obj, "Data"));
+	history_record_type_t type = json_data0_value(cJSON_GetObjectItem(obj, "Data"));
 	for (int i = 0; i < history_length; i++) {
 		history_record_t *r = &history[i];
 		if (r->time == t && r->type == type) {
@@ -69,15 +69,15 @@ static history_record_t *find_object(json_t *obj) {
 	return 0;
 }
 
-static void check_insulin(history_record_t *r, json_t *obj) {
-	double v = json_number_value(obj);
-	if (r->insulin != (int)(1000 * v)) {
-		double u = r->insulin / 1000.0;
+static void check_insulin(history_record_t *r, cJSON *obj) {
+	double v = obj->valuedouble;
+	if (r->insulin != (insulin_t)(1000 * v)) {
+		double u = (double)r->insulin / 1000;
 		test_failed("[%s] %s insulin = %g, JSON value = %g", time_string(r->time), type_string(r->type), u, v);
 	}
 }
 
-static void check_duration(history_record_t *r, json_t *obj) {
+static void check_duration(history_record_t *r, cJSON *obj) {
 	time_t d = json_duration_value(obj);
 	if (r->duration != d) {
 		test_failed("[%s] %s duration = %d, JSON value = %d", time_string(r->time), type_string(r->type), r->duration / 60, d / 60);
@@ -86,28 +86,28 @@ static void check_duration(history_record_t *r, json_t *obj) {
 
 static int records_matched;
 
-static void check_object(json_t *obj) {
+static void check_object(cJSON *obj) {
 	history_record_t *r = find_object(obj);
 	if (r == 0) {
 		return;
 	}
 	switch (r->type) {
 	case Bolus:
-		check_insulin(r, json_object_path(obj, "Info.Amount"));
-		check_duration(r, json_object_path(obj, "Info.Duration"));
+		check_insulin(r, object_path(obj, "Info.Amount"));
+		check_duration(r, object_path(obj, "Info.Duration"));
 		break;
 	case TempBasalDuration:
-		check_duration(r, json_object_get(obj, "Info"));
+		check_duration(r, cJSON_GetObjectItem(obj, "Info"));
 		break;
 	case SuspendPump:
 		break;
 	case ResumePump:
 		break;
 	case TempBasalRate:
-		check_insulin(r, json_object_path(obj, "Info.Value"));
+		check_insulin(r, object_path(obj, "Info.Value"));
 		break;
 	case BasalProfileStart:
-		check_insulin(r, json_object_path(obj, "Info.BasalRate.Rate"));
+		check_insulin(r, object_path(obj, "Info.BasalRate.Rate"));
 		break;
 	default:
 		fprintf(stderr, "unexpected %s record at %s\n", type_string(r->type), time_string(r->time));
@@ -119,32 +119,16 @@ static void check_object(json_t *obj) {
 }
 
 void compare_with_json(char *filename) {
-	FILE *f = fopen(filename, "r");
-	if (f == 0) {
-		perror(filename);
-		exit(1);
-	}
-	json_error_t error;
-	json_t *root = json_loadf(f, 0, &error);
-	fclose(f);
-	if (root == 0) {
-		fprintf(stderr, "%s:%d: %s\n", filename, error.line, error.text);
-		exit(1);
-	}
-	if (!json_is_array(root)) {
-		fprintf(stderr, "%s: root is not a JSON array\n", filename);
-		exit(1);
-	}
+	char *json_string = read_file(filename);
+	cJSON *root = cJSON_Parse(json_string);
+	assert(root != 0);
+	assert(cJSON_IsArray(root));
+	int n = cJSON_GetArraySize(root);
 	records_matched = 0;
-	for (int i = 0; i < json_array_size(root); i++) {
-		json_t *obj = json_array_get(root, i);
-		if (!json_is_object(obj)) {
-			fprintf(stderr, "%s: element %d is not a JSON object\n", filename, i);
-			exit(1);
-		}
-		check_object(obj);
+	for (int i = 0; i < n; i++) {
+		check_object(cJSON_GetArrayItem(root, i));
 	}
-	json_decref(root);
+	cJSON_Delete(root);
 	if (records_matched != history_length) {
 		test_failed("[%s] matched %d JSON records out of %d", filename, records_matched, history_length);
 	}

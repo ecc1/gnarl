@@ -3,7 +3,7 @@
 
 #include "testing.h"
 
-void usage() {
+void usage(void) {
 	fprintf(stderr, "Usage: read_history [-m model] data-file\n");
 	exit(1);
 }
@@ -13,7 +13,7 @@ static void print_record(history_record_t *r) {
 	printf("  %s %-18s %5d %4d\n", time_string(r->time), type_string(r->type), r->insulin, minutes);
 }
 
-static void print_history() {
+static void print_history(void) {
 	printf("%d history records:\n", history_length);
 	for (int i = 0; i < history_length; i++) {
 		print_record(&history[i]);

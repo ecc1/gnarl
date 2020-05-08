@@ -17,7 +17,7 @@ decode_time_case_t decode_time_cases[] = {
 };
 #define NUM_DECODE_TIME_CASES	(sizeof(decode_time_cases)/sizeof(decode_time_cases[0]))
 
-void test_decode_time() {
+void test_decode_time(void) {
 	for (int i = 0; i < NUM_DECODE_TIME_CASES; i++) {
 		decode_time_case_t *c = &decode_time_cases[i];
 		uint8_t *bytes = parse_bytes(c->byte_str);
@@ -46,7 +46,7 @@ parse_json_time_case_t parse_json_time_cases[] = {
 };
 #define NUM_PARSE_JSON_TIME_CASES	(sizeof(parse_json_time_cases)/sizeof(parse_json_time_cases[0]))
 
-void test_parse_json_time() {
+void test_parse_json_time(void) {
 	for (int i = 0; i < NUM_PARSE_JSON_TIME_CASES; i++) {
 		parse_json_time_case_t *c = &parse_json_time_cases[i];
 		time_t t = parse_json_time(c->json_str);
@@ -71,7 +71,7 @@ parse_duration_case_t parse_duration_cases[] = {
 };
 #define NUM_PARSE_DURATION_CASES	(sizeof(parse_duration_cases)/sizeof(parse_duration_cases[0]))
 
-void test_parse_duration() {
+void test_parse_duration(void) {
 	for (int i = 0; i < NUM_PARSE_DURATION_CASES; i++) {
 		parse_duration_case_t *c = &parse_duration_cases[i];
 		time_t t = parse_duration(c->s);
@@ -93,7 +93,7 @@ since_midnight_case_t since_midnight_cases[] = {
 };
 #define NUM_SINCE_MIDNIGHT_CASES	(sizeof(since_midnight_cases)/sizeof(since_midnight_cases[0]))
 
-void test_since_midnight() {
+void test_since_midnight(void) {
 	for (int i = 0; i < NUM_SINCE_MIDNIGHT_CASES; i++) {
 		since_midnight_case_t *c = &since_midnight_cases[i];
 		time_t t = parse_json_time(c->ts);

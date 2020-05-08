@@ -82,6 +82,9 @@ int pump_targets(target_t *r, int max);
 int pump_temp_basal(int *minutes);
 int pump_wakeup(void);
 
+char *time_string(time_t t);
+time_t since_midnight(time_t t);
+
 #define DECLARE_SCHEDULE_LOOKUP(type)	type##_t *type##_at(type##_t *r, int len, time_t t)
 
 DECLARE_SCHEDULE_LOOKUP(basal_rate);

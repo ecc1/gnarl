@@ -17,7 +17,7 @@ basal_rate_at_case_t basal_rate_at_cases[] = {
 
 basal_rate_t basal_rate_sched[24];
 
-void test_basal_rate_at() {
+void test_basal_rate_at(void) {
 	for (int h = 0; h < 24; h++) {
 		basal_rate_sched[h] = (basal_rate_t){
 			.start = h * 3600,
