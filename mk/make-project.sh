@@ -3,7 +3,7 @@
 project="$1"
 src="src/$project"
 
-if [ "$(basename $(pwd))" != gnarl ]; then
+if [ "$(basename $(pwd))" != pickle ]; then
     echo "script must be run from the top-level gnarl directory"
     exit 1
 fi
