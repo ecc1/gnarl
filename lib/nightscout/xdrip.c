@@ -19,6 +19,7 @@ esp_http_client_handle_t xdrip_client_handle(void) {
 	snprintf(url, sizeof(url), "http://%s:17580/sgv.json", XDRIP_HOST);
 	esp_http_client_config_t config = {
 		.url = url,
+		.timeout_ms = 10000,
 		.event_handler = http_header_callback,
 	};
 	ESP_LOGI(TAG, "xDrip URL: %s", config.url);
