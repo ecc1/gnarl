@@ -5,7 +5,7 @@
 
 extern FILE *papertrail;
 
-int papertrail_init(void);
+void papertrail_init(void);
 
 #undef ESP_LOGE
 #define ESP_LOGE(tag, fmt, ...)							\
