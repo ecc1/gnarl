@@ -33,6 +33,11 @@ char *duration_string(int seconds, char *buf) {
 }
 
 char *insulin_string(insulin_t ins, char *buf) {
-	sprintf(buf, "%d.%03d U", ins / 1000, ins % 1000);
+	char *p = buf;
+	if (ins < 0) {
+		*p++ = '-';
+		ins = -ins;
+	}
+	sprintf(p, "%d.%03d U", ins / 1000, ins % 1000);
 	return buf;
 }
