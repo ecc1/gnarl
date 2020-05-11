@@ -400,7 +400,7 @@ void gnarl_init(void) {
 
 	server_init();
 
-	int err = ble_svc_gap_device_name_set("PCKL2");
+	int err = ble_svc_gap_device_name_set("PICKL");
 	assert(!err);
 
 	ble_store_ram_init();
