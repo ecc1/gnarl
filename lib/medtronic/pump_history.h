@@ -1,3 +1,6 @@
+#ifndef _PUMP_HISTORY_H
+#define _PUMP_HISTORY_H
+
 // These definitions track github.com/ecc1/medtronic/historyrecord.go
 typedef enum PACKED {
 	Bolus                   = 0x01,
@@ -89,8 +92,26 @@ typedef struct {
 	uint8_t length;
 	time_t time;
 	insulin_t insulin;
-	time_t duration;
+	int duration;		// seconds
 } history_record_t;
 
+typedef enum PACKED {
+	BatteryOutLimitExceeded = 0x03,
+	NoDelivery              = 0x04,
+	BatteryDepleted         = 0x05,
+	AutoOff                 = 0x06,
+	DeviceReset             = 0x10,
+	ReprogramError          = 0x3D,
+	EmptyReservoir          = 0x3E,
+} alarm_code_t;
+
 time_t decode_time(uint8_t *data);
-int decode_history(uint8_t *page, int family, history_record_t *r, int max);
+
+// Signature of function to be applied to history records during decoding.
+typedef int (*history_record_fn_t)(history_record_t *);
+
+// Decode the given history page and apply f to each insulin-related record.
+// If f returns a non-zero value, the decoding loop terminates.
+void decode_history(uint8_t *page, int len, int family, history_record_fn_t decode_fn);
+
+#endif // _PUMP_HISTORY_H

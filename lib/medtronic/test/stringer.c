@@ -1,4 +1,4 @@
-#include "testing.h"
+#include "medtronic_test.h"
 
 const char *type_string(history_record_type_t t) {
 	static char buf[20];

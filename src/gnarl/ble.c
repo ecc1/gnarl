@@ -13,7 +13,7 @@
 #include <services/gatt/ble_svc_gatt.h>
 
 #include "commands.h"
-#include "led.h"
+//#include "led.h"
 
 
 #define MAX_DATA	150
@@ -175,7 +175,7 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 			return 0;
 		}
 		connected = true;
-		led_on();
+		//led_on();
 		connection_handle = e->connect.conn_handle;
 		ESP_LOGI(TAG, "connected");
 		ESP_LOGD(TAG, "connection handle %04X", connection_handle);
@@ -184,7 +184,7 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 		break;
 	case BLE_GAP_EVENT_DISCONNECT:
 		connected = false;
-		led_off();
+		//led_off();
 		ESP_LOGD(TAG, "disconnected");
 		advertise();
 		ble_errors = ble_errors + 1;
@@ -400,7 +400,7 @@ void gnarl_init(void) {
 
 	server_init();
 
-	int err = ble_svc_gap_device_name_set("PICKL");
+	int err = ble_svc_gap_device_name_set("PCKL2");
 	assert(!err);
 
 	ble_store_ram_init();

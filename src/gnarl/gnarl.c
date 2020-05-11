@@ -13,8 +13,8 @@
 #include "commands.h"
 #include "rfm95.h"
 
-#define MAX_PARAM_LEN	16
-#define MAX_PACKET_LEN	107
+#define MAX_PARAM_LEN	32
+#define MAX_PACKET_LEN	256
 
 typedef enum {
 	ENCODING_NONE = 0,
@@ -293,7 +293,7 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 
 static void gnarl_loop(void *unused) {
 	ESP_LOGD(TAG, "starting gnarl_loop");
-	const int timeout_ms = 60*MILLISECONDS;
+	const int timeout_ms = 30*MILLISECONDS;
 	for (;;) {
 		rfspy_request_t req;
 		if (!xQueueReceive(request_queue, &req, pdMS_TO_TICKS(timeout_ms))) {

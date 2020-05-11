@@ -1,4 +1,4 @@
-#include "testing.h"
+#include "medtronic_test.h"
 
 typedef struct {
 	char *byte_str;
@@ -22,9 +22,10 @@ void test_decode_time(void) {
 		decode_time_case_t *c = &decode_time_cases[i];
 		uint8_t *bytes = parse_bytes(c->byte_str);
 		time_t t = decode_time(bytes);
-		char *s = time_string(t);
-		if (strcmp(s, c->time_str) != 0) {
-			test_failed("[%d] decode_time(%s) = %s, want %s", i, c->byte_str, s, c->time_str);
+		char ts[TIME_STRING_SIZE];
+		time_string(t, ts);
+		if (strcmp(ts, c->time_str) != 0) {
+			test_failed("[%d] decode_time(%s) = %s, want %s", i, c->byte_str, ts, c->time_str);
 		}
 	}
 }
@@ -50,9 +51,10 @@ void test_parse_json_time(void) {
 	for (int i = 0; i < NUM_PARSE_JSON_TIME_CASES; i++) {
 		parse_json_time_case_t *c = &parse_json_time_cases[i];
 		time_t t = parse_json_time(c->json_str);
-		char *s = time_string(t);
-		if (strcmp(s, c->time_str) != 0) {
-			test_failed("[%d] parse_json_time(%s) = %s, want %s", i, c->json_str, s, c->time_str);
+		char ts[TIME_STRING_SIZE];
+		time_string(t, ts);
+		if (strcmp(ts, c->time_str) != 0) {
+			test_failed("[%d] parse_json_time(%s) = %s, want %s", i, c->json_str, ts, c->time_str);
 		}
 	}
 }
@@ -83,7 +85,7 @@ void test_parse_duration(void) {
 
 typedef struct {
 	char *ts;
-	time_t s;
+	time_of_day_t s;
 } since_midnight_case_t;
 
 since_midnight_case_t since_midnight_cases[] = {

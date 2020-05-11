@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "rfm95.h"
 
-#define PUMP_FREQUENCY 868300000
+#define PUMP_FREQUENCY 868000000
 
 void app_main(void) {
 	ESP_LOGI(TAG, "%s", SUBG_RFSPY_VERSION);

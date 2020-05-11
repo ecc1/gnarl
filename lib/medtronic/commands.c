@@ -1,6 +1,3 @@
-#include <stdint.h>
-#include <string.h>
-
 #include "medtronic.h"
 #include "4b6b.h"
 #include "commands.h"
@@ -330,10 +327,10 @@ uint8_t *download_page(command_t cmd, int page_num, int *len) {
 	return 0;
 }
 
-int pump_wakeup(void) {
+bool pump_wakeup(void) {
 	int m = pump_model();
 	if (m != -1) {
-		return 1;
+		return true;
 	}
 	encode_short_packet(CMD_WAKEUP);
 	int n;

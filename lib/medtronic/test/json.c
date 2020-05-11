@@ -1,6 +1,6 @@
 #include <cJSON.h>
 
-#include "testing.h"
+#include "medtronic_test.h"
 
 static cJSON *object_path(cJSON *obj, const char *path) {
 	char buf[20];
@@ -73,20 +73,24 @@ static void check_insulin(history_record_t *r, cJSON *obj) {
 	double v = obj->valuedouble;
 	if (r->insulin != (insulin_t)(1000 * v)) {
 		double u = (double)r->insulin / 1000;
-		test_failed("[%s] %s insulin = %g, JSON value = %g", time_string(r->time), type_string(r->type), u, v);
+		char ts[TIME_STRING_SIZE];
+		test_failed("[%s] %s insulin = %g, JSON value = %g", time_string(r->time, ts), type_string(r->type), u, v);
 	}
 }
 
 static void check_duration(history_record_t *r, cJSON *obj) {
 	time_t d = json_duration_value(obj);
 	if (r->duration != d) {
-		test_failed("[%s] %s duration = %d, JSON value = %d", time_string(r->time), type_string(r->type), r->duration / 60, d / 60);
+		char ts[TIME_STRING_SIZE];
+		test_failed("[%s] %s duration = %d, JSON value = %d", time_string(r->time, ts), type_string(r->type), r->duration / 60, d / 60);
 	}
 }
 
 static int records_matched;
 
+// This check must cover all record types for which decode_history_record can return 1.
 static void check_object(cJSON *obj) {
+	char ts[TIME_STRING_SIZE];
 	history_record_t *r = find_object(obj);
 	if (r == 0) {
 		return;
@@ -96,12 +100,20 @@ static void check_object(cJSON *obj) {
 		check_insulin(r, object_path(obj, "Info.Amount"));
 		check_duration(r, object_path(obj, "Info.Duration"));
 		break;
+	case Prime:
+		break;
+	case Alarm:
+		break;
+	case ClearAlarm:
+		break;
 	case TempBasalDuration:
 		check_duration(r, cJSON_GetObjectItem(obj, "Info"));
 		break;
 	case SuspendPump:
 		break;
 	case ResumePump:
+		break;
+	case Rewind:
 		break;
 	case TempBasalRate:
 		check_insulin(r, object_path(obj, "Info.Value"));
@@ -110,7 +122,7 @@ static void check_object(cJSON *obj) {
 		check_insulin(r, object_path(obj, "Info.BasalRate.Rate"));
 		break;
 	default:
-		fprintf(stderr, "unexpected %s record at %s\n", type_string(r->type), time_string(r->time));
+		fprintf(stderr, "unexpected %s record at %s\n", type_string(r->type), time_string(r->time, ts));
 		exit(1);
 	}
 	// Zero out record so it is not considered again.

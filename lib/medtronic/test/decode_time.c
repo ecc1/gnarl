@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -14,5 +13,6 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < 5; i++) {
 		data[i] = strtol(argv[i + 1], 0, 16);
 	}
-	printf("%s\n", time_string(decode_time(data)));
+	char ts[TIME_STRING_SIZE];
+	printf("%s\n", time_string(decode_time(data), ts));
 }
