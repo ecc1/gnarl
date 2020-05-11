@@ -60,12 +60,8 @@ In my version, I have removed display (you can also buy hardware without a displ
 ## Running
 
 Run [Loop](https://loopkit.github.io/loopdocs/) on your iPhone.
-Pickle should show up when you scan for a RileyLink.
+Pickle should show up when you scan for a RileyLink with name "PICKL".
 
-Pickle will show messages on the OLED display when your phone
-connects and disconnects. Pushing the button will display the current
-status. Pickle may not respond to the button press immediately if it is
-communicating with the pump, due to scheduling priorities.
 
 ### Pump-specific configuration
 
