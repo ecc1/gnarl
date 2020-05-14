@@ -17,6 +17,8 @@
 
 #include "network_config.h"
 
+extern volatile int bnep_failure;
+
 static struct netif bnep_netif;
 
 static uint16_t bnep_cid;
@@ -109,19 +111,20 @@ void handle_bnep_packet(uint8_t packet_type, uint16_t channel, uint8_t *packet, 
         case HCI_EVENT_PACKET:
 		switch (hci_event_packet_get_type(packet)) {
                 case BNEP_EVENT_CHANNEL_OPENED:
-			if (bnep_event_channel_opened_get_status(packet) != 0)
+			if (bnep_event_channel_opened_get_status(packet) != 0) {
 				break;
+			}
 			bnep_cid = bnep_event_channel_opened_get_bnep_cid(packet);
-			ESP_LOGD(TAG, "BNEP channel opened: CID = %x", bnep_cid);
 			gap_local_bd_addr(local_addr);
 			netif_link_up(local_addr);
+			ESP_LOGD(TAG, "BNEP channel opened: CID = %x", bnep_cid);
 			break;
-
                 case BNEP_EVENT_CHANNEL_CLOSED:
-			ESP_LOGD(TAG, "BNEP channel closed");
+			bnep_failure = 1;
 			bnep_cid = 0;
 			discard_packets();
 			netif_link_down();
+			ESP_LOGD(TAG, "BNEP channel closed");
 			break;
                 case BNEP_EVENT_CAN_SEND_NOW:
 			send_next_packet();
@@ -210,8 +213,6 @@ static void status_callback(struct netif *netif) {
 	have_ip_address = 1;
 }
 
-extern volatile int bnep_failure;
-
 static void wait_for_dhcp(void) {
 	int n = 0;
 	while (!have_ip_address && !bnep_failure) {
@@ -234,20 +235,20 @@ void handle_hci_startup_packet(uint8_t packet_type, uint16_t channel, uint8_t *p
 
 static void bt_loop(void *unused) {
 	btstack_init();
-	static btstack_packet_callback_registration_t hci_callback = {
-		.callback = handle_hci_startup_packet,
-	};
 	// Parse human-readable Bluetooth address.
 	sscanf_bd_addr(TETHER_ADDRESS, bt_tether_addr);
 	gap_discoverable_control(1);
 	gap_ssp_set_io_capability(SSP_IO_CAPABILITY_DISPLAY_YES_NO);
 	gap_set_local_name("ESP32 PAN Client");
 	gap_set_class_of_device(SERVICE_CLASS_NETWORKING | DEVICE_CLASS_LAN_NAP);
-	hci_add_event_handler(&hci_callback);
 	l2cap_init();
 	sdp_init();
 	bnep_init();
 	bnep_interface_init();
+	static btstack_packet_callback_registration_t hci_callback = {
+		.callback = handle_hci_startup_packet,
+	};
+	hci_add_event_handler(&hci_callback);
 	hci_power_control(HCI_POWER_ON);
 	btstack_run_loop_execute();
 }

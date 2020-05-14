@@ -39,12 +39,14 @@ static void handle_sdp_query_result(uint8_t packet_type, uint16_t channel, uint8
 		id = sdp_event_query_attribute_byte_get_attribute_id(packet);
 		switch (id) {
 		case BLUETOOTH_ATTRIBUTE_SERVICE_CLASS_ID_LIST:
-			if (de_get_element_type(attribute_value) != DE_DES)
+			if (de_get_element_type(attribute_value) != DE_DES) {
 				break;
+			}
 			for (des_iterator_init(&des_list_it, attribute_value); des_iterator_has_more(&des_list_it); des_iterator_next(&des_list_it)) {
 				uint8_t *element = des_iterator_get_element(&des_list_it);
-				if (de_get_element_type(element) != DE_UUID)
+				if (de_get_element_type(element) != DE_UUID) {
 					continue;
+				}
 				uint32_t uuid = de_get_uuid32(element);
 				switch (uuid) {
 				case BLUETOOTH_SERVICE_CLASS_PANU:
@@ -58,21 +60,25 @@ static void handle_sdp_query_result(uint8_t packet_type, uint16_t channel, uint8
 			break;
 		case BLUETOOTH_ATTRIBUTE_PROTOCOL_DESCRIPTOR_LIST:
 			for (des_iterator_init(&des_list_it, attribute_value); des_iterator_has_more(&des_list_it); des_iterator_next(&des_list_it)) {
-				if (des_iterator_get_type(&des_list_it) != DE_DES)
+				if (des_iterator_get_type(&des_list_it) != DE_DES) {
 					continue;
+				}
 				uint8_t *des_element = des_iterator_get_element(&des_list_it);
 				des_iterator_t prot_it;
 				des_iterator_init(&prot_it, des_element);
 				uint8_t *element = des_iterator_get_element(&prot_it);
-				if (!element)
+				if (!element) {
 					continue;
-				if (de_get_element_type(element) != DE_UUID)
+				}
+				if (de_get_element_type(element) != DE_UUID) {
 					continue;
+				}
 				uint32_t uuid = de_get_uuid32(element);
 				des_iterator_next(&prot_it);
 				if (uuid == BLUETOOTH_PROTOCOL_L2CAP) {
-					if (!des_iterator_has_more(&prot_it))
+					if (!des_iterator_has_more(&prot_it)) {
 						continue;
+					}
 					de_element_get_uint16(des_iterator_get_element(&prot_it), &bnep_l2cap_psm);
 					ESP_LOGI(TAG, "L2CAP PSM = %04x", bnep_l2cap_psm);
 				}
