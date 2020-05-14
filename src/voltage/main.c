@@ -9,6 +9,7 @@
 
 #define VBAT		ADC1_CHANNEL_7
 #define DEFAULT_VREF	1100
+#define NUM_SAMPLES	64
 
 static esp_adc_cal_characteristics_t *adc_chars;
 
@@ -21,8 +22,13 @@ void voltage_init(void) {
 }
 
 int voltage_read(int *rawp) {
-	int raw = adc1_get_raw(VBAT);
-	int voltage = esp_adc_cal_raw_to_voltage(raw, adc_chars);
+	int raw = 0;
+	for (int i = 0; i < NUM_SAMPLES; i++) {
+		raw += adc1_get_raw(VBAT);
+	}
+	raw /= NUM_SAMPLES;
+	// With 10M + 2M voltage divider, ADC voltage is 1/6 of actual value.
+	int voltage = esp_adc_cal_raw_to_voltage(raw, adc_chars) * 6;
 	if (rawp) {
 		*rawp = raw;
 	}
