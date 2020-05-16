@@ -1,5 +1,9 @@
 project
+*_config.h
 include/timezone.h
-include/*_config.h
 include/*.pem
-lib/medtronic/test/testdata
+**/test/testdata
+*.txt
+!CMakeLists.txt
+README.*
+!README.md
