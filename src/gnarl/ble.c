@@ -352,7 +352,7 @@ static uint8_t led_mode;
 static int led_mode_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
 	int err;
 	uint16_t n;
-	assert(ble_uuid_cmp(ctxt->chr->uuid, &data_uuid.u) == 0);
+	assert(ble_uuid_cmp(ctxt->chr->uuid, &led_mode_uuid.u) == 0);
 	switch (ctxt->op) {
 	case BLE_GATT_ACCESS_OP_READ_CHR:
 		ESP_LOGD(TAG, "led_mode_access: mode = %d", led_mode);
