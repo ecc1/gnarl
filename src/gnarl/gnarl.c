@@ -284,7 +284,7 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	// It is totally fine to ignore subsequent calls as if
 	// in_get_packet is true we are already looping in the code
 	// to send a response.  The commands and responses do not
-        // seem to have a sequence number.
+	// seem to have a sequence number.
 	if ((cmd == CmdGetPacket) && in_get_packet) {
 		ESP_LOGI(TAG, "CmdGetPacket while GetPacket is active, ignoring.");
 		return;
@@ -305,7 +305,7 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	};
 	memcpy(req.data, buf + 2, req.length);
 	if (!xQueueSend(request_queue, &req, 0)) {
-		ESP_LOGD(TAG, "rfspy_command: cannot queue request for command %d, queue length %d",
+		ESP_LOGE(TAG, "rfspy_command: cannot queue request for command %d, queue length %d",
                          cmd, uxQueueMessagesWaiting(request_queue));
 		return;
 	}
