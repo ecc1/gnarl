@@ -278,13 +278,13 @@ static void set_sw_encoding(const uint8_t *buf, int len) {
 
 static void send_stats() {
 	statistics.uptime = xTaskGetTickCount();
-        // from rfm95
-        statistics.packet_rx_count = rx_packet_count();
-        statistics.packet_tx_count = tx_packet_count();
+	// from rfm95
+	statistics.packet_rx_count = rx_packet_count();
+	statistics.packet_tx_count = tx_packet_count();
 
 	ESP_LOGD(TAG, "send_stats len %d uptime %d rx %d tx %d",
-		 sizeof(statistics), statistics.uptime,
-		 statistics.packet_rx_count, statistics.packet_tx_count);
+			sizeof(statistics), statistics.uptime,
+			statistics.packet_rx_count, statistics.packet_tx_count);
 
 	reverse_four_bytes(&statistics.uptime);
 	reverse_two_bytes(&statistics.packet_rx_count);
