@@ -66,6 +66,19 @@ typedef struct __attribute__((packed)) {
 	uint8_t packet[MAX_PACKET_LEN];
 } response_packet_t;
 
+typedef struct __attribute__((packed)) {
+	uint32_t uptime;
+	uint16_t rx_overflow;
+	uint16_t rx_fifo_overflow;
+	uint16_t packet_rx_count;
+	uint16_t packet_tx_count;
+	uint16_t crc_failure_count;
+	uint16_t spi_sync_failure_count;
+	uint16_t placeholder0;
+	uint16_t placeholder1;
+} statistics_cmd_t;
+static statistics_cmd_t statistics;
+
 static response_packet_t rx_buf;
 
 static inline void swap_bytes(uint8_t *p, uint8_t *q) {
@@ -263,6 +276,24 @@ static void set_sw_encoding(const uint8_t *buf, int len) {
 	send_code(RESPONSE_CODE_SUCCESS);
 }
 
+static void send_stats() {
+	statistics.uptime = xTaskGetTickCount();
+        // from rfm95
+        statistics.packet_rx_count = rx_packet_count();
+        statistics.packet_tx_count = tx_packet_count();
+
+	ESP_LOGD(TAG, "send_stats len %d uptime %d rx %d tx %d",
+		 sizeof(statistics), statistics.uptime,
+		 statistics.packet_rx_count, statistics.packet_tx_count);
+
+	reverse_four_bytes(&statistics.uptime);
+	reverse_two_bytes(&statistics.packet_rx_count);
+	reverse_two_bytes(&statistics.packet_tx_count);
+
+	send_bytes((const uint8_t *)&statistics, sizeof(statistics));
+}
+
+// This is called from the ble task
 void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	if (count == 0) {
 		ESP_LOGE(TAG, "rfspy_command: count == 0");
@@ -286,7 +317,8 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	};
 	memcpy(req.data, buf + 2, req.length);
 	if (!xQueueSend(request_queue, &req, 0)) {
-		ESP_LOGE(TAG, "rfspy_command: cannot queue request for command %d", cmd);
+		ESP_LOGD(TAG, "rfspy_command: cannot queue request for command %d", cmd);
+		statistics.rx_fifo_overflow += 1;
 		return;
 	}
 	ESP_LOGD(TAG, "rfspy_command %d, queue length %d", cmd, uxQueueMessagesWaiting(request_queue));
@@ -337,6 +369,10 @@ static void gnarl_loop(void *unused) {
 		case CmdResetRadioConfig:
 			ESP_LOGI(TAG, "CmdResetRadioConfig");
 			send_code(RESPONSE_CODE_SUCCESS);
+			break;
+		case CmdGetStatistics:
+			ESP_LOGI(TAG, "CmdGetStatistics");
+			send_stats();
 			break;
 		default:
 			ESP_LOGE(TAG, "unimplemented rfspy command %d", req.command);
