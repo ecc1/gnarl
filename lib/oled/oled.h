@@ -1,6 +1,8 @@
 #ifndef _OLED_H
 #define _OLED_H
 
+#include <stdint.h>
+
 #define OLED_WIDTH	128
 #define OLED_HEIGHT	64
 
