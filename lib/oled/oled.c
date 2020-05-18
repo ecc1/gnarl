@@ -1,3 +1,5 @@
+#ifdef OLED_ENABLE
+
 #include <u8g2.h>
 
 static u8g2_t u8g2;
@@ -140,3 +142,36 @@ void oled_init(void) {
 	oled_on();
 	oled_clear();
 }
+
+#else
+
+void oled_init() {}
+
+void oled_on() {}
+void oled_off() {}
+
+void oled_clear() {}
+void oled_update() {}
+
+int oled_font_width() { return 1; }
+int oled_font_ascent() { return 2; }
+int oled_font_descent() { return 3; }
+
+void oled_font_small() {}
+void oled_font_medium() {}
+void oled_font_large() {}
+
+void oled_font_sans_serif() {}
+void oled_font_serif() {}
+void oled_font_monospace() {}
+
+void oled_align_left() {}
+void oled_align_right() {}
+void oled_align_center() {}
+void oled_align_center_both() {}
+
+int oled_string_width(const char *s) { return 4; }
+void oled_draw_string(int x, int y, const char *s) {}
+
+void oled_draw_box(int x, int y, int w, int h) {}
+#endif
