@@ -317,7 +317,7 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	};
 	memcpy(req.data, buf + 2, req.length);
 	if (!xQueueSend(request_queue, &req, 0)) {
-		ESP_LOGD(TAG, "rfspy_command: cannot queue request for command %d", cmd);
+		ESP_LOGE(TAG, "rfspy_command: cannot queue request for command %d", cmd);
 		statistics.rx_fifo_overflow += 1;
 		return;
 	}
