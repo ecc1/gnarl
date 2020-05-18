@@ -33,9 +33,11 @@ typedef struct {
 	uint8_t data[MAX_PARAM_LEN + MAX_PACKET_LEN];
 } rfspy_request_t;
 
-#define QUEUE_LENGTH		10
+#define QUEUE_LENGTH		20
 
 static QueueHandle_t request_queue;
+
+static TaskHandle_t gnarl_loop_handle = NULL;
 
 typedef struct __attribute__((packed)) {
 	uint8_t listen_channel;
@@ -165,13 +167,17 @@ static void rx_common(int n, int rssi) {
 	send_bytes((uint8_t *)&rx_buf, 2 + n);
 }
 
+static volatile int in_get_packet = 0;
+
 static void get_packet(const uint8_t *buf, int len) {
 	get_packet_cmd_t *p = (get_packet_cmd_t *)buf;
 	reverse_four_bytes(&p->timeout_ms);
 	ESP_LOGD(TAG, "get_packet: listen_channel %d timeout_ms %d",
 		 p->listen_channel, p->timeout_ms);
+	in_get_packet = 1;
 	int n = receive(rx_buf.packet, sizeof(rx_buf.packet), p->timeout_ms);
 	rx_common(n, read_rssi());
+	in_get_packet = 0;
 }
 
 static void send_packet(const uint8_t *buf, int len) {
@@ -304,11 +310,24 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 		return;
 	}
 	rfspy_cmd_t cmd = buf[1];
-	// Special case: handle register upates immediately so they don't fill up the queue.
-	if (cmd == CmdUpdateRegister) {
-		ESP_LOGI(TAG, "CmdUpdateRegister");
-		update_register(buf + 2, count - 2);
+
+	// GetPacket is used by Loop to wait for MySentry packets
+	// It is totally fine to ignore subsequent calls as if
+	// in_get_packet is true we are already looping in the code
+	// to send a response.  The commands and responses do not
+	// seem to have a sequence number.
+	if ((cmd == CmdGetPacket) && in_get_packet) {
+		ESP_LOGI(TAG, "CmdGetPacket while GetPacket is active, ignoring.");
 		return;
+	}
+
+	// Do this before enqueueing, otherwise there is a risk of self-inflicting
+	// the notification due to concurrency.
+	if (uxQueueMessagesWaiting(request_queue) > 0) {
+		if (in_get_packet) {
+			ESP_LOGD(TAG, "rfspy_command sending notify give.");
+			xTaskNotifyGive(gnarl_loop_handle);
+		}
 	}
 	rfspy_request_t req = {
 		.command = cmd,
@@ -386,5 +405,5 @@ static void gnarl_loop(void *unused) {
 void start_gnarl_task(void) {
 	request_queue = xQueueCreate(QUEUE_LENGTH, sizeof(rfspy_request_t));
 	// Start radio task with high priority to avoid receiving truncated packets.
-	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, tskIDLE_PRIORITY + 24, 0);
+	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, tskIDLE_PRIORITY + 24, &gnarl_loop_handle);
 }

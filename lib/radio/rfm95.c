@@ -339,6 +339,8 @@ static void wait_until_interrupt(int timeout) {
 static void wait_until_interrupt(int timeout) {
 	ESP_LOGD(TAG, "waiting until interrupt");
 	rx_waiting_task = xTaskGetCurrentTaskHandle();
+	// Clear any notifications before starting to wait.
+	xTaskNotifyWait(0, 0, 0, 0);
 	xTaskNotifyWait(0, 0, 0, pdMS_TO_TICKS(timeout));
 	rx_waiting_task = 0;
 	ESP_LOGD(TAG, "finished waiting");
