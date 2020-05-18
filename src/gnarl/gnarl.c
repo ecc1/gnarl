@@ -39,7 +39,6 @@ static QueueHandle_t request_queue;
 
 static TaskHandle_t gnarl_loop_handle = NULL;
 
-
 typedef struct __attribute__((packed)) {
 	uint8_t listen_channel;
 	uint32_t timeout_ms;
@@ -163,7 +162,7 @@ static void get_packet(const uint8_t *buf, int len) {
 	ESP_LOGD(TAG, "get_packet: listen_channel %d timeout_ms %d",
 		 p->listen_channel, p->timeout_ms);
 	in_get_packet = 1;
-	int n = receive(rx_buf.packet, sizeof(rx_buf.packet), timeout);
+	int n = receive(rx_buf.packet, sizeof(rx_buf.packet), p->timeout_ms);
 	rx_common(n, read_rssi());
 	in_get_packet = 0;
 }
