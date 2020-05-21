@@ -9,6 +9,8 @@
 #define MILLISECONDS	1000
 #define SECONDS		1000000
 
+#define WDT_TIMEOUT_SECONDS (5*60)
+
 #define MHz		1000000
 
 // Track github.com/ps2/rileylink/firmware/ble113_rfspy/gatt.xml
