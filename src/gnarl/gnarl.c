@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <esp_timer.h>
+#include <esp_task_wdt.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
@@ -294,12 +295,14 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 
 static void gnarl_loop(void *unused) {
 	ESP_LOGD(TAG, "starting gnarl_loop");
+	esp_task_wdt_add(NULL);
 	const int timeout_ms = 60*MILLISECONDS;
 	for (;;) {
 		rfspy_request_t req;
 		if (!xQueueReceive(request_queue, &req, pdMS_TO_TICKS(timeout_ms))) {
 			continue;
 		}
+		esp_task_wdt_reset();
 		switch (req.command) {
 		case CmdGetState:
 			ESP_LOGI(TAG, "CmdGetState");
