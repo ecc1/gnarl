@@ -9,6 +9,7 @@
 #include <nimble/nimble_port.h>
 #include <nimble/nimble_port_freertos.h>
 #include <nvs_flash.h>
+#include <nvs.h>
 #include <services/gap/ble_svc_gap.h>
 #include <services/gatt/ble_svc_gatt.h>
 
@@ -16,6 +17,12 @@
 #include "display.h"
 
 #define MAX_DATA	150
+#define DEFAULT_NAME    "GNARL"
+
+#define CUSTOM_NAME_SIZE 30
+#define STORAGE_NAMESPACE "GNARL"
+
+static uint8_t custom_name[CUSTOM_NAME_SIZE];
 
 void ble_store_ram_init(void);
 
@@ -131,8 +138,10 @@ static void server_init(void) {
 }
 
 static void advertise(void) {
-	struct ble_hs_adv_fields fields;
+	struct ble_hs_adv_fields fields, fields_ext;
+	char short_name[6]; // 5 plus zero byte
 	memset(&fields, 0, sizeof(fields));
+	memset(&fields_ext, 0, sizeof(fields_ext));
 
 	fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
 
@@ -140,16 +149,44 @@ static void advertise(void) {
 	fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
 	const char *name = ble_svc_gap_device_name();
-	fields.name = (uint8_t *)name;
-	fields.name_len = strlen(name);
-	fields.name_is_complete = 1;
+	strncpy(short_name, name, 5);
+	short_name[5] = 0;
+	fields.name = (uint8_t *)short_name;
+	fields.name_len = strlen(short_name);
+	if (strlen(name) <= 5) {
+		fields.name_is_complete = 1;
+	} else {
+		fields.name_is_complete = 0;
+		ESP_LOGD(TAG, "device name shortened to %s", short_name);
+	}
+
+	ESP_LOGD(TAG, "gap_device_name %d %s", fields.name_len, fields.name);
 
 	fields.uuids128 = &service_uuid;
 	fields.num_uuids128 = 1;
 	fields.uuids128_is_complete = 1;
 
 	int err = ble_gap_adv_set_fields(&fields);
+	if (err) {
+		ESP_LOGE(TAG, "ble_gap_adv_set_fields err %d", err);
+	}
 	assert(!err);
+
+	if (!fields.name_is_complete) {
+		// Not sure if we have to set the flags again.
+		// We should determine and check the maximum
+		// length here as well to prevent crashing.
+		fields_ext.flags = fields.flags;
+		fields_ext.name = (uint8_t *)name;
+		fields_ext.name_len = strlen(name);
+		fields_ext.name_is_complete = 1;
+		int err = ble_gap_adv_set_fields(&fields_ext);
+		if (err) {
+			ESP_LOGE(TAG, "ble_gap_adv_set_fields fields_ext, name might be too long, err %d", err);
+		}
+		// Do not crash, but keep going. It is hard to recover
+		// otherwise.
+	}
 
 	// Begin advertising.
 	struct ble_gap_adv_params adv;
@@ -313,23 +350,78 @@ static int data_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_ga
 	return 0;
 }
 
-static uint8_t custom_name[30];
-static uint16_t custom_name_len;
+
+static void read_custom_name(void) {
+    ESP_LOGD(TAG, "read_custom_name from nvs");
+    nvs_handle my_handle;
+    esp_err_t err;
+
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) {
+    	ESP_LOGE(TAG, "read_custom_name nvs_open err %d", err);
+	return;
+    }
+    size_t required_size = CUSTOM_NAME_SIZE;
+    err = nvs_get_blob(my_handle, "custom_name", custom_name, &required_size);
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+	strcpy((char *)custom_name, DEFAULT_NAME);
+	ESP_LOGD(TAG, "Set default custom name: %s", custom_name);
+    } else if (err != ESP_OK) {
+    	ESP_LOGE(TAG, "read_custom_name nvs_get_blob err %d", err);
+	return;
+    } else {
+	ESP_LOGD(TAG, "Read custom name success: %s", custom_name);
+    }
+
+    nvs_close(my_handle);
+}
+
+
+static void write_custom_name(void) {
+    ESP_LOGD(TAG, "write_custom_name to nvs");
+    nvs_handle my_handle;
+    esp_err_t err;
+
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) {
+    	ESP_LOGE(TAG, "write_custom_name nvs_open err %d", err);
+	return;
+    }
+
+    err = nvs_set_blob(my_handle, "custom_name", custom_name, CUSTOM_NAME_SIZE);
+    if (err != ESP_OK) {
+    	ESP_LOGE(TAG, "write_custom_name nvs_set_blob err %d", err);
+	return;
+    }
+
+    err = nvs_commit(my_handle);
+    if (err != ESP_OK) {
+    	ESP_LOGE(TAG, "write_custom_name nvs_commit err %d", err);
+	return;
+    }
+
+    nvs_close(my_handle);
+}
 
 static int custom_name_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
 	int err;
-	assert(ble_uuid_cmp(ctxt->chr->uuid, &data_uuid.u) == 0);
+	uint16_t custom_name_len;
+	assert(ble_uuid_cmp(ctxt->chr->uuid, &custom_name_uuid.u) == 0);
 	switch (ctxt->op) {
 	case BLE_GATT_ACCESS_OP_READ_CHR:
-		print_bytes("custom_name_access: sending %d bytes:", custom_name, custom_name_len);
+		print_bytes("custom_name_access: sending %d bytes", custom_name, custom_name_len);
 		if (os_mbuf_append(ctxt->om, custom_name, custom_name_len) != 0) {
 			return BLE_ATT_ERR_INSUFFICIENT_RES;
 		}
 		return 0;
 	case BLE_GATT_ACCESS_OP_WRITE_CHR:
 		err = ble_hs_mbuf_to_flat(ctxt->om, custom_name, sizeof(custom_name), &custom_name_len);
+		custom_name[custom_name_len] = 0;
 		assert(!err);
-		print_bytes("custom_name_access: received %d bytes:", custom_name, custom_name_len);
+		print_bytes("custom_name_access: received %d bytes", custom_name, custom_name_len);
+		ESP_LOGD(TAG, "New custom name: %s", custom_name);
+		write_custom_name();
+		esp_restart();
 		return 0;
 	default:
 		assert(0);
@@ -393,7 +485,9 @@ void gnarl_init(void) {
 
 	server_init();
 
-	int err = ble_svc_gap_device_name_set("GNARL");
+	read_custom_name();
+
+	int err = ble_svc_gap_device_name_set((char *)custom_name);
 	assert(!err);
 
 	ble_store_ram_init();
