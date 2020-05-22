@@ -5,7 +5,9 @@ char *gateway_address(void);
 
 #ifdef USE_BLUETOOTH_TETHERING
 
-void tether_init(void);
+#define NETWORK_CONFIG	"Bluetooth"
+
+int tether_init(void);
 #define network_init	tether_init
 
 void tether_off(void);
@@ -13,7 +15,9 @@ void tether_off(void);
 
 #else
 
-void wifi_init(void);
+#define NETWORK_CONFIG	"WiFi"
+
+int wifi_init(void);
 #define network_init	wifi_init
 
 void wifi_off(void);

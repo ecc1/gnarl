@@ -213,16 +213,36 @@ static void status_callback(struct netif *netif) {
 	have_ip_address = 1;
 }
 
-static void wait_for_dhcp(void) {
+#define WAIT_INTERVAL	100	// milliseconds
+#define MAX_BNEP_WAITS	3000	// 5 minutes
+#define MAX_DHCP_WAITS	1200	// 2 minutes
+
+static int wait_for_dhcp(void) {
 	int n = 0;
-	while (!have_ip_address && !bnep_failure) {
+	while (!dhcp_started && !bnep_failure && n < MAX_BNEP_WAITS) {
 		link_callback(&bnep_netif);
+		if (n++ % 50 == 0) {
+			ESP_LOGD(TAG, "waiting for BNEP connection");
+		}
+		vTaskDelay(pdMS_TO_TICKS(WAIT_INTERVAL));
+	}
+	if (n == MAX_BNEP_WAITS) {
+		ESP_LOGE(TAG, "timeout waiting for BNEP connection");
+		return -1;
+	}
+	n = 0;
+	while (!have_ip_address && !bnep_failure && n < MAX_DHCP_WAITS) {
 		status_callback(&bnep_netif);
-		if (n++ % 10 == 0) {
+		if (n++ % 50 == 0) {
 			ESP_LOGD(TAG, "waiting for IP address");
 		}
-		vTaskDelay(pdMS_TO_TICKS(250));
+		vTaskDelay(pdMS_TO_TICKS(WAIT_INTERVAL));
 	}
+	if (n == MAX_DHCP_WAITS) {
+		ESP_LOGE(TAG, "timeout waiting for IP address");
+		return -1;
+	}
+	return have_ip_address ? 0 : -1;
 }
 
 extern bd_addr_t bt_tether_addr;
@@ -253,9 +273,9 @@ static void bt_loop(void *unused) {
 	btstack_run_loop_execute();
 }
 
-void tether_init(void) {
-	xTaskCreate(bt_loop, "bt_loop", 4096, 0, tskIDLE_PRIORITY + 10, 0);
-	wait_for_dhcp();
+int tether_init(void) {
+	xTaskCreate(bt_loop, "bt_loop", 4096, 0, ESP_TASK_BT_CONTROLLER_PRIO, 0);
+	return wait_for_dhcp();
 }
 
 void tether_off(void) {

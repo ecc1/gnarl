@@ -11,8 +11,8 @@
 #include "network_config.h"
 
 #define MAX_RETRIES  		5
-#define RETRY_INTERVAL		100	// milliseconds
-#define IP_TIMEOUT		15000	// milliseconds
+#define RETRY_INTERVAL		500	// milliseconds
+#define IP_TIMEOUT		30000	// milliseconds
 
 static esp_netif_t *wifi_interface;
 static int retry_num;
@@ -59,7 +59,7 @@ static void handle_ip_event(void* arg, esp_event_base_t event_base, int32_t even
 	}
 }
 
-void wifi_init(void) {
+int wifi_init(void) {
 	ESP_ERROR_CHECK(nvs_flash_init());
 	ESP_ERROR_CHECK(esp_netif_init());
 
@@ -85,7 +85,9 @@ void wifi_init(void) {
 	waiting_task = xTaskGetCurrentTaskHandle();
 	if (!xTaskNotifyWait(0, 0, 0, pdMS_TO_TICKS(IP_TIMEOUT))) {
 		ESP_LOGE(TAG, "timeout waiting for IP address");
+		return -1;
 	}
+	return 0;
 }
 
 void wifi_off(void) {
