@@ -5,7 +5,7 @@
 #include "timezone_config.h"
 
 void app_main(void) {
-	network_init();
+	ESP_ERROR_CHECK(network_init());
 	printf("IP address: %s\n", ip_address());
 	setenv("TZ", TZ, 1);
 	tzset();
