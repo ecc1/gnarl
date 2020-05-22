@@ -161,21 +161,32 @@ It should look like this:
 	#define PUMP_FREQUENCY	916500000	// pump frequency
 	#define MMTUNE_START	916300000	// starting frequency for mmtune scans
 
-### WiFi configuration
+### Network configuration
 
-The WiFi configuration must be hard-coded in the `include/wifi_config.h` file as follows:
+The network configuration for WiFi or Bluetooth tethering must be hard-coded in the `include/network_config.h` file.
+For WiFi, define the following:
 
 	#define WIFI_SSID	"network name"
 	#define WIFI_PASSWORD	"network password"
+
+For Bluetooth tethering, define the following:
+
+	#define USE_BLUETOOTH_TETHERING
+	#define TETHER_ADDRESS	"12:34:56:78:9A:BC"
+
+The Bluetooth tethering code currently requires
+[the BlueKitchen Bluetooth stack.](https://github.com/bluekitchen/btstack)
+Follow [these instructions](https://github.com/bluekitchen/btstack/blob/master/port/esp32/README.md)
+to integrate it into your ESP-IDF environment.
 
 ### Nightscout configuration
 
 Nightscout server information must be defined in `include/nightscout_config.h` as follows:
 
-    // DNS hostname, not a URL
+	// DNS hostname, not a URL
 	#define NIGHTSCOUT_HOST		"your.nightscout.hostname"
 
-    // 40-character SHA-1 hash of your Nightscout API secret
+	// 40-character SHA-1 hash of your Nightscout API secret
 	#define NIGHTSCOUT_API_SECRET	"0123456789abcdef0123456789abcdef01234567"
 
 The SSL layer requires the root certificate used by the Nightscout
@@ -185,6 +196,13 @@ You can extract it from the output of this command:
     openssl s_client -showcerts -connect NIGHTSCOUT_HOST:443 </dev/null
 
 The root certificate is the last one in the chain.
+
+### Papertrail configuration
+
+Papertrail logging information must be defined in `include/papertrail_config.h` as follows:
+
+	#define PAPERTRAIL_HOST	"xyz.papertrailapp.com"
+	#define PAPERTRAIL_PORT	12345
 
 ### Time zone configuration
 
