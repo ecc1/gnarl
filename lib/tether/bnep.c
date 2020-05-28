@@ -1,6 +1,7 @@
 #define TAG		"BNEP"
 #define LOG_LOCAL_LEVEL	ESP_LOG_INFO
 #include <esp_log.h>
+#include <esp_bt.h>
 
 #include <btstack_config.h>
 #include <btstack.h>
@@ -280,4 +281,6 @@ int tether_init(void) {
 
 void tether_off(void) {
 	bnep_disconnect(bt_tether_addr);
+	hci_power_control(HCI_POWER_OFF);
+	esp_bt_controller_disable();
 }

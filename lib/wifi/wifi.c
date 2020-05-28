@@ -91,6 +91,7 @@ int wifi_init(void) {
 }
 
 void wifi_off(void) {
+	esp_wifi_stop();
 }
 
 static char addr[20];
