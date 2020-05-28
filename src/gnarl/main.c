@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#include <esp_wifi.h>
 #include <esp_task_wdt.h>
 
 #include "display.h"
