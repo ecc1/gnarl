@@ -1,5 +1,9 @@
+#ifndef _GNARL_H
+#define _GNARL_H
+
 #include <stdint.h>
 
+#include "pump_config.h"
 #include "version.h"
 
 #define TAG		"GNARL"
@@ -24,3 +28,5 @@ void rfspy_command(const uint8_t *buf, int count, int rssi);
 void send_code(const uint8_t code);
 void send_bytes(const uint8_t *buf, int count);
 void print_bytes(const char* msg, const uint8_t *buf, int count);
+
+#endif // _GNARL_H
