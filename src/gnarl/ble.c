@@ -259,8 +259,8 @@ static void sync_callback(void) {
 	ble_hs_id_copy_addr(addr_type, addr, 0);
 	if (LOG_LOCAL_LEVEL >= ESP_LOG_DEBUG) {
 		printf("device address: ");
-		for (int i = 0; i < sizeof(addr); i++) {
-			printf("%s%02x", i == 0 ? "" : ":", addr[i]);
+		for (int i = sizeof(addr)-1; i >= 0; i--) {
+			printf("%02x%s", addr[i], i == 0 ? "" : ":");
 		}
 		printf("\n");
 	}
