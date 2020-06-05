@@ -6,7 +6,7 @@
 
 #include <esp_http_client.h>
 
-esp_http_client_handle_t nightscout_client_handle(void);
+esp_http_client_handle_t nightscout_client_handle(const char *endpoint);
 esp_http_client_handle_t xdrip_client_handle(void);
 
 char *http_get(esp_http_client_handle_t client);
