@@ -149,8 +149,7 @@ static void advertise(void) {
 	fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
 	const char *name = ble_svc_gap_device_name();
-	strncpy(short_name, name, 5);
-	short_name[5] = 0;
+	strncpy(short_name, name, sizeof(short_name));
 	fields.name = (uint8_t *)short_name;
 	fields.name_len = strlen(short_name);
 	if (strlen(name) <= 5) {
@@ -184,8 +183,7 @@ static void advertise(void) {
 		if (err) {
 			ESP_LOGE(TAG, "ble_gap_adv_set_fields fields_ext, name might be too long, err %d", err);
 		}
-		// Do not crash, but keep going. It is hard to recover
-		// otherwise.
+		// Do not crash, but keep going. It is hard to recover otherwise.
 	}
 
 	// Begin advertising.
@@ -403,11 +401,12 @@ static void write_custom_name(void) {
 
 static int custom_name_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
 	int err;
-	uint16_t custom_name_len;
+	uint16_t custom_name_len = strlen((char *)custom_name);
+	assert(custom_name_len <= sizeof(custom_name));
 	assert(ble_uuid_cmp(ctxt->chr->uuid, &custom_name_uuid.u) == 0);
 	switch (ctxt->op) {
 	case BLE_GATT_ACCESS_OP_READ_CHR:
-		print_bytes("custom_name_access: sending %d bytes", custom_name, custom_name_len);
+		print_bytes("custom_name_access: sending %d bytes:", custom_name, custom_name_len);
 		if (os_mbuf_append(ctxt->om, custom_name, custom_name_len) != 0) {
 			return BLE_ATT_ERR_INSUFFICIENT_RES;
 		}
@@ -415,9 +414,9 @@ static int custom_name_access(uint16_t conn_handle, uint16_t attr_handle, struct
 	case BLE_GATT_ACCESS_OP_WRITE_CHR:
 		err = ble_hs_mbuf_to_flat(ctxt->om, custom_name, sizeof(custom_name), &custom_name_len);
 		custom_name[custom_name_len] = 0;
-		assert(!err);
-		print_bytes("custom_name_access: received %d bytes", custom_name, custom_name_len);
+		print_bytes("custom_name_access: received %d bytes:", custom_name, custom_name_len);
 		ESP_LOGD(TAG, "New custom name: %s", custom_name);
+		assert(!err);
 		write_custom_name();
 		esp_restart();
 		return 0;
