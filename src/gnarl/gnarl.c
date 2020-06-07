@@ -297,7 +297,7 @@ static void set_sw_encoding(const uint8_t *buf, int len) {
 
 static void send_stats() {
 	statistics.uptime = xTaskGetTickCount();
-	// from rfm95
+	// From rfm95:
 	statistics.packet_rx_count = rx_packet_count();
 	statistics.packet_tx_count = tx_packet_count();
 	ESP_LOGD(TAG, "send_stats len %d uptime %d rx %d tx %d",
@@ -309,7 +309,7 @@ static void send_stats() {
 	send_bytes((const uint8_t *)&statistics, sizeof(statistics));
 }
 
-// This is called from the ble task
+// This is called from the ble task.
 void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	if (count == 0) {
 		ESP_LOGE(TAG, "rfspy_command: count == 0");
@@ -321,13 +321,12 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	}
 	rfspy_cmd_t cmd = buf[1];
 
-	// GetPacket is used by Loop to wait for MySentry packets
-	// It is totally fine to ignore subsequent calls as if
-	// in_get_packet is true we are already looping in the code
-	// to send a response.  The commands and responses do not
-	// seem to have a sequence number.
+	// GetPacket is used by Loop to wait for MySentry packets.
+	// It is fine to ignore subsequent calls if in_get_packet is true
+	// because we are already looping in the code to send a response.
+	// The commands and responses do not seem to have a sequence number.
 	if ((cmd == CmdGetPacket) && in_get_packet) {
-		ESP_LOGI(TAG, "CmdGetPacket while GetPacket is active, ignoring.");
+		ESP_LOGI(TAG, "ignoring CmdGetPacket while GetPacket is active");
 		return;
 	}
 
@@ -335,7 +334,7 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	// the notification due to concurrency.
 	if (uxQueueMessagesWaiting(request_queue) > 0) {
 		if (in_get_packet) {
-			ESP_LOGD(TAG, "rfspy_command sending notify give.");
+			ESP_LOGD(TAG, "rfspy_command: xTaskNotifyGive");
 			xTaskNotifyGive(gnarl_loop_handle);
 		}
 	}
