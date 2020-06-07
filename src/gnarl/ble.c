@@ -351,51 +351,42 @@ static int data_access(uint16_t conn_handle, uint16_t attr_handle, struct ble_ga
 static void read_custom_name(void) {
 	ESP_LOGD(TAG, "read_custom_name from nvs");
 	nvs_handle my_handle;
-	esp_err_t err;
-
-	err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+	esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
 	if (err != ESP_OK) {
-		ESP_LOGE(TAG, "read_custom_name nvs_open err %d", err);
+		ESP_LOGE(TAG, "read_custom_name: nvs_open: %s", esp_err_to_name(err));
 		return;
 	}
 	size_t required_size = CUSTOM_NAME_SIZE;
 	err = nvs_get_blob(my_handle, "custom_name", custom_name, &required_size);
 	if (err == ESP_ERR_NVS_NOT_FOUND) {
 		strcpy((char *)custom_name, DEFAULT_NAME);
-		ESP_LOGD(TAG, "Set default custom name: %s", custom_name);
+		ESP_LOGD(TAG, "set default custom name: %s", custom_name);
 	} else if (err != ESP_OK) {
-		ESP_LOGE(TAG, "read_custom_name nvs_get_blob err %d", err);
-		return;
+		ESP_LOGE(TAG, "read_custom_name: nvs_get_blob: %s", esp_err_to_name(err));
 	} else {
-		ESP_LOGD(TAG, "Read custom name success: %s", custom_name);
+		ESP_LOGD(TAG, "read_custom_name success: %s", custom_name);
 	}
-
 	nvs_close(my_handle);
 }
 
 static void write_custom_name(void) {
 	ESP_LOGD(TAG, "write_custom_name to nvs");
 	nvs_handle my_handle;
-	esp_err_t err;
-
-	err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+	esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
 	if (err != ESP_OK) {
-		ESP_LOGE(TAG, "write_custom_name nvs_open err %d", err);
+		ESP_LOGE(TAG, "write_custom_name: nvs_open: %s", esp_err_to_name(err));
 		return;
 	}
-
 	err = nvs_set_blob(my_handle, "custom_name", custom_name, CUSTOM_NAME_SIZE);
 	if (err != ESP_OK) {
-		ESP_LOGE(TAG, "write_custom_name nvs_set_blob err %d", err);
+		ESP_LOGE(TAG, "write_custom_name: nvs_set_blob: %s", esp_err_to_name(err));
+		nvs_close(my_handle);
 		return;
 	}
-
 	err = nvs_commit(my_handle);
 	if (err != ESP_OK) {
-		ESP_LOGE(TAG, "write_custom_name nvs_commit err %d", err);
-		return;
+		ESP_LOGE(TAG, "write_custom_name: nvs_commit: %s", esp_err_to_name(err));
 	}
-
 	nvs_close(my_handle);
 }
 
