@@ -269,6 +269,18 @@ static void led_mode(const uint8_t *buf, int len) {
 	send_code(RESPONSE_CODE_SUCCESS);
 }
 
+static void read_register(const uint8_t *buf, int len) {
+	uint8_t addr = buf[0];
+	uint8_t value = 0;
+	switch (addr) {
+	case 0x09 ... 0x0B:
+		value = fr[addr - 0x09];
+		break;
+	}
+	ESP_LOGD(TAG, "read_register: addr %02X value %02X", addr, value);
+	send_bytes(&value, sizeof(value));
+}
+
 static void set_sw_encoding(const uint8_t *buf, int len) {
 	ESP_LOGD(TAG, "encoding mode %02X", buf[0]);
 	switch (buf[0]) {
@@ -288,15 +300,12 @@ static void send_stats() {
 	// from rfm95
 	statistics.packet_rx_count = rx_packet_count();
 	statistics.packet_tx_count = tx_packet_count();
-
 	ESP_LOGD(TAG, "send_stats len %d uptime %d rx %d tx %d",
-			sizeof(statistics), statistics.uptime,
-			statistics.packet_rx_count, statistics.packet_tx_count);
-
+		 sizeof(statistics), statistics.uptime,
+		 statistics.packet_rx_count, statistics.packet_tx_count);
 	reverse_four_bytes(&statistics.uptime);
 	reverse_two_bytes(&statistics.packet_rx_count);
 	reverse_two_bytes(&statistics.packet_tx_count);
-
 	send_bytes((const uint8_t *)&statistics, sizeof(statistics));
 }
 
@@ -383,6 +392,10 @@ static void gnarl_loop(void *unused) {
 		case CmdLED:
 			ESP_LOGI(TAG, "CmdLED");
 			led_mode(req.data, req.length);
+			break;
+		case CmdReadRegister:
+			ESP_LOGI(TAG, "CmdReadRegister");
+			read_register(req.data, req.length);
 			break;
 		case CmdSetSWEncoding:
 			ESP_LOGI(TAG, "CmdSetSWEncoding");
