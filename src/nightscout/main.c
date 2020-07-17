@@ -14,4 +14,8 @@ void app_main(void) {
 		printf("%s  server time\n", nightscout_time_string(http_server_time));
 	}
 	process_nightscout_entries(response, print_nightscout_entry);
+	time_t last = get_last_treatment_time();
+	if (last) {
+		printf("%s  last treatment\n", nightscout_time_string(last));
+	}
 }

@@ -3,7 +3,6 @@
 #include <esp_log.h>
 
 #include "nightscout.h"
-#include "nightscout_config.h"
 
 #define NIGHTSCOUT_BASE	"https://" NIGHTSCOUT_HOST
 #define MAX_URL_LEN	256
@@ -22,7 +21,8 @@ esp_err_t http_header_callback(esp_http_client_event_t *e);
 
 esp_http_client_handle_t nightscout_client_handle(const char *endpoint) {
 	static char url[MAX_URL_LEN];
-	snprintf(url, sizeof(url), "%s/%s", NIGHTSCOUT_BASE, endpoint);
+	char *opt_slash = endpoint[0] == '/' ? "" : "/";
+	snprintf(url, sizeof(url), "%s%s%s", NIGHTSCOUT_BASE, opt_slash, endpoint);
 	esp_http_client_config_t config = {
 		.url = url,
 		.timeout_ms = 10000,

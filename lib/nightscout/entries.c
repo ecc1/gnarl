@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -10,14 +9,6 @@
 #include <cJSON.h>
 
 #include "nightscout.h"
-
-struct timeval timeval_from_milliseconds(double ms) {
-	struct timeval tv = {
-		.tv_sec = ms / 1000,
-		.tv_usec = fmod(ms, 1000) * 1000,
-	};
-	return tv;
-}
 
 static void do_entry(const cJSON *e, nightscout_entry_callback_t cb) {
 	const cJSON *item = cJSON_GetObjectItem(e, "type");
@@ -58,8 +49,13 @@ void process_nightscout_entries(const char *json, nightscout_entry_callback_t ca
 		return;
 	}
 	cJSON *root = cJSON_Parse(json);
-	if (!root || !cJSON_IsArray(root)) {
+	if (!root) {
+		ESP_LOGE(TAG, "cannot parse response \"%s\"", json);
+		return;
+	}
+	if (!cJSON_IsArray(root)) {
 		ESP_LOGE(TAG, "response \"%s\" is not a JSON array", json);
+		cJSON_Delete(root);
 		return;
 	}
 	int n = cJSON_GetArraySize(root);
@@ -71,5 +67,5 @@ void process_nightscout_entries(const char *json, nightscout_entry_callback_t ca
 }
 
 void print_nightscout_entry(const nightscout_entry_t *e) {
-	printf("%s  %3d\n", nightscout_time_string(e->tv.tv_sec), e->sgv);
+	printf("%s  %3d\n", nightscout_time_string(round_to_seconds(e->tv)), e->sgv);
 }

@@ -4,7 +4,6 @@
 
 #include "network.h"
 #include "nightscout.h"
-#include "nightscout_config.h"
 
 esp_err_t http_header_callback(esp_http_client_event_t *e);
 

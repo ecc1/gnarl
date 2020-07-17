@@ -4,7 +4,6 @@
 #define TAG		"HTTP"
 
 #include <esp_log.h>
-#include <esp_http_client.h>
 
 #include "nightscout.h"
 
