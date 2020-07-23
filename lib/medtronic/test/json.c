@@ -74,7 +74,7 @@ static void check_insulin(history_record_t *r, cJSON *obj) {
 	if (r->insulin != (insulin_t)(1000 * v)) {
 		double u = (double)r->insulin / 1000;
 		char ts[TIME_STRING_SIZE];
-		test_failed("[%s] %s insulin = %g, JSON value = %g", time_string(r->time, ts), type_string(r->type), u, v);
+		test_failed("[%s] %s insulin = %g, JSON value = %g", time_string(r->time, ts), history_record_type_string(r->type), u, v);
 	}
 }
 
@@ -82,7 +82,7 @@ static void check_duration(history_record_t *r, cJSON *obj) {
 	time_t d = json_duration_value(obj);
 	if (r->duration != d) {
 		char ts[TIME_STRING_SIZE];
-		test_failed("[%s] %s duration = %d, JSON value = %d", time_string(r->time, ts), type_string(r->type), r->duration / 60, d / 60);
+		test_failed("[%s] %s duration = %d, JSON value = %d", time_string(r->time, ts), history_record_type_string(r->type), r->duration / 60, d / 60);
 	}
 }
 
@@ -122,7 +122,7 @@ static void check_object(cJSON *obj) {
 		check_insulin(r, object_path(obj, "Info.BasalRate.Rate"));
 		break;
 	default:
-		fprintf(stderr, "unexpected %s record at %s\n", type_string(r->type), time_string(r->time, ts));
+		fprintf(stderr, "unexpected %s record at %s\n", history_record_type_string(r->type), time_string(r->time, ts));
 		exit(1);
 	}
 	// Zero out record so it is not considered again.

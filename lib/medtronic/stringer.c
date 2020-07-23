@@ -1,7 +1,9 @@
-#include "medtronic_test.h"
+#include <stdio.h>
 
-const char *type_string(history_record_type_t t) {
-	static char buf[20];
+#include "medtronic.h"
+#include "pump_history.h"
+
+const char *history_record_type_string(history_record_type_t t) {
 	switch (t) {
 	case Bolus:
 		return "Bolus";
@@ -168,7 +170,9 @@ const char *type_string(history_record_type_t t) {
 	case EnableCaptureEvent:
 		return "EnableCaptureEvent";
 	default:
-		sprintf(buf, "Unknown%02X", t);
-		return buf;
+		break;
 	}
+	static char buf[20];
+	sprintf(buf, "Unknown%02X", t);
+	return buf;
 }

@@ -8,7 +8,7 @@ void usage(void) {
 static void print_record(history_record_t *r) {
 	int minutes = r->duration / 60;
 	char ts[TIME_STRING_SIZE];
-	printf("  %s %-18s %5d %4d\n", time_string(r->time, ts), type_string(r->type), r->insulin, minutes);
+	printf("  %s %-18s %5d %4d\n", time_string(r->time, ts), history_record_type_string(r->type), r->insulin, minutes);
 }
 
 static void print_history(void) {

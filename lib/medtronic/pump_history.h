@@ -87,6 +87,8 @@ typedef enum PACKED {
 	EnableCaptureEvent      = 0x83,
 } history_record_type_t;
 
+const char *history_record_type_string(history_record_type_t t);
+
 typedef struct {
 	history_record_type_t type;
 	uint8_t length;
