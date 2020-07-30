@@ -6,8 +6,9 @@
 
 #include "nightscout.h"
 
-time_t get_last_treatment_time(void) {
-	char *json = http_get(nightscout_client_handle("api/v1/treatments.json?count=1"));
+time_t get_last_treatment_time(esp_http_client_handle_t client) {
+	esp_http_client_set_url(client, "/api/v1/treatments.json?count=1");
+	char *json = http_get(client);
 	if (!json) {
 		ESP_LOGE(TAG, "no response");
 		return 0;
@@ -89,6 +90,6 @@ static char *treatment_json(nightscout_treatment_t *t) {
 
 void upload_treatment(esp_http_client_handle_t client, nightscout_treatment_t *t) {
 	char *json = treatment_json(t);
-	nightscout_upload(client, "api/v1/treatments", json);
+	nightscout_upload(client, "/api/v1/treatments", json);
 	free(json);
 }

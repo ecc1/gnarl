@@ -6,5 +6,6 @@
 
 void nightscout_upload(esp_http_client_handle_t client, const char *endpoint, const char *json) {
 	ESP_LOGD(TAG, "upload to %s: %s", endpoint, json);
-	// FIXME
+	esp_http_client_set_url(client, endpoint);
+	ESP_LOGE(TAG, "upload not implemented yet");
 }

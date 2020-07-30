@@ -12,6 +12,7 @@
 
 esp_http_client_handle_t nightscout_client_handle(const char *endpoint);
 esp_http_client_handle_t xdrip_client_handle(void);
+void nightscout_client_close(esp_http_client_handle_t client);
 
 char *http_get(esp_http_client_handle_t client);
 
@@ -55,7 +56,7 @@ typedef struct {
 	int minutes;	// duration of temp basal
 } nightscout_treatment_t;
 
-time_t get_last_treatment_time(void);
+time_t get_last_treatment_time(esp_http_client_handle_t client);
 
 void upload_treatment(esp_http_client_handle_t client, nightscout_treatment_t *t);
 

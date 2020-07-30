@@ -40,8 +40,6 @@ char *http_get(esp_http_client_handle_t client) {
 		len -= n;
         }
 	*p = 0;
-	esp_http_client_close(client);
-	esp_http_client_cleanup(client);
 	return err == ESP_OK ? response : 0;
 }
 

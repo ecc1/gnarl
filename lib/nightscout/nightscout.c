@@ -32,3 +32,8 @@ esp_http_client_handle_t nightscout_client_handle(const char *endpoint) {
 	ESP_LOGI(TAG, "Nightscout URL: %s", config.url);
 	return esp_http_client_init(&config);
 }
+
+void nightscout_client_close(esp_http_client_handle_t client) {
+	esp_http_client_close(client);
+	esp_http_client_cleanup(client);
+}

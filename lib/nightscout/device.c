@@ -49,6 +49,6 @@ static char *device_status_json(nightscout_device_status_t *s) {
 
 void upload_device_status(esp_http_client_handle_t client, nightscout_device_status_t *s) {
 	char *json = device_status_json(s);
-	nightscout_upload(client, "api/v1/devicestatus", json);
+	nightscout_upload(client, "/api/v1/devicestatus", json);
 	free(json);
 }

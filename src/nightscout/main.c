@@ -9,13 +9,15 @@ void app_main(void) {
 	printf("IP address: %s\n", ip_address());
 	setenv("TZ", TZ, 1);
 	tzset();
-	char *response = http_get(nightscout_client_handle("api/v1/entries.json"));
+	esp_http_client_handle_t ns = nightscout_client_handle("/api/v1/entries.json");
+	char *response = http_get(ns);
 	if (http_server_time) {
 		printf("%s  server time\n", nightscout_time_string(http_server_time));
 	}
 	process_nightscout_entries(response, print_nightscout_entry);
-	time_t last = get_last_treatment_time();
+	time_t last = get_last_treatment_time(ns);
 	if (last) {
 		printf("%s  last treatment\n", nightscout_time_string(last));
 	}
+	nightscout_client_close(ns);
 }
