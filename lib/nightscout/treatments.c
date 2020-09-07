@@ -7,7 +7,7 @@
 #include "nightscout.h"
 
 time_t get_last_treatment_time(esp_http_client_handle_t client) {
-	esp_http_client_set_url(client, "/api/v1/treatments.json?count=1");
+	esp_http_client_set_url(client, "/api/v1/treatments?count=1");
 	char *json = http_get(client);
 	if (!json) {
 		ESP_LOGE(TAG, "no response");

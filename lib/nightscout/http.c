@@ -10,6 +10,7 @@
 time_t http_server_time;
 
 char *http_get(esp_http_client_handle_t client) {
+	esp_http_client_set_header(client, "accept", "application/json");
 	http_server_time = 0;
 	esp_err_t err = esp_http_client_open(client, 0);
 	if (err != ESP_OK) {

@@ -9,7 +9,7 @@ void app_main(void) {
 	printf("IP address: %s\n", ip_address());
 	setenv("TZ", TZ, 1);
 	tzset();
-	esp_http_client_handle_t ns = nightscout_client_handle("/api/v1/entries.json");
+	esp_http_client_handle_t ns = nightscout_client_handle("/api/v1/entries");
 	char *response = http_get(ns);
 	if (http_server_time) {
 		printf("%s  server time\n", nightscout_time_string(http_server_time));
