@@ -9,7 +9,7 @@ void app_main(void) {
 	printf("IP address: %s\n", ip_address());
 	setenv("TZ", TZ, 1);
 	tzset();
-	char *response = http_get(xdrip_client_handle());
+	char *response = http_get(xdrip_client_handle(), "/sgv.json");
 	if (http_server_time) {
 		printf("%s  server time\n", nightscout_time_string(http_server_time));
 	}

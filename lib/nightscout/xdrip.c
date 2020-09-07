@@ -15,7 +15,7 @@ esp_err_t http_header_callback(esp_http_client_event_t *e);
 
 esp_http_client_handle_t xdrip_client_handle(void) {
 	static char url[256];
-	snprintf(url, sizeof(url), "http://%s:17580/sgv.json", XDRIP_HOST);
+	snprintf(url, sizeof(url), "http://%s:17580", XDRIP_HOST);
 	esp_http_client_config_t config = {
 		.url = url,
 		.timeout_ms = 10000,
