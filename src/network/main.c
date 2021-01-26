@@ -52,6 +52,6 @@ void app_main(void) {
 	printf("IP address: %s\n", ip_address());
 	printf("Gateway:    %s\n", gateway_address());
 	lookup_host("google.com");
-	char *resp = http_get("http://postman-echo.com/get?alpha=xyz&beta=1000&gamma=true");
+	char *resp = http_get("https://postman-echo.com/get?alpha=xyz&beta=1000&gamma=true");
 	puts(resp ? resp : "(no response)");
 }
