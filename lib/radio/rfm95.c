@@ -142,7 +142,7 @@ void rfm95_init(void) {
 	// Use unlimited length packet format (data sheet section 4.2.13.2).
 	write_register(REG_PACKET_CONFIG_1, PACKET_FORMAT_FIXED);
 	write_register(REG_PAYLOAD_LENGTH, 0);
-	write_register(REG_PACKET_CONFIG_2, PACKET_MODE| 0);
+	write_register(REG_PACKET_CONFIG_2, PACKET_MODE | 0);
 }
 
 static inline bool fifo_empty(void) {
@@ -263,7 +263,7 @@ static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 	// Use unlimited length packet format (data sheet section 4.2.13.2).
 	write_register(REG_PACKET_CONFIG_1, PACKET_FORMAT_FIXED);
 	write_register(REG_PAYLOAD_LENGTH, 0);
-	write_register(REG_PACKET_CONFIG_2, PACKET_MODE| 0);
+	write_register(REG_PACKET_CONFIG_2, PACKET_MODE | 0);
 	gpio_intr_enable(DIO2);
 	ESP_LOGD(TAG, "starting receive");
 	set_mode_receive();
