@@ -3,8 +3,9 @@
 #define TAG		"rfm95"
 
 #include <esp_log.h>
+#include <driver/gpio.h>
+#include <driver/uart.h>
 #include <esp_sleep.h>
-#include <esp32/rom/uart.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
@@ -88,29 +89,14 @@ int tx_packet_count(void) {
 	return tx_packets;
 }
 
-static volatile TaskHandle_t rx_waiting_task;
-
-static void IRAM_ATTR rx_interrupt(void *unused) {
-	rx_packets++;
-	if (rx_waiting_task != 0) {
-		vTaskNotifyGiveFromISR(rx_waiting_task, 0);
-	}
-}
-
 void rfm95_init(void) {
 	spi_init();
 	rfm95_reset();
 
-	gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
-
 	gpio_set_direction(DIO2, GPIO_MODE_INPUT);
 	gpio_set_intr_type(DIO2, GPIO_INTR_POSEDGE);
-	gpio_isr_handler_add(DIO2, rx_interrupt, 0);
 	// Interrupt on DIO2 when SyncMatch occurs.
 	write_register(REG_DIO_MAPPING_1, 3 << DIO2_MAPPING_SHIFT);
-	// Wake up on receive interrupt.
-	gpio_wakeup_enable(DIO2, GPIO_INTR_HIGH_LEVEL);
-	esp_sleep_enable_gpio_wakeup();
 
 	// Must be in Sleep mode first before the second call can change to FSK/OOK mode.
 	set_mode_sleep();
@@ -303,15 +289,20 @@ static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 			n--;
 		}
 	}
+	if (n > 0) {
+		rx_packets++;
+	}
 	return n;
 }
 
 static void sleep_until_interrupt(int timeout) {
-	uart_tx_wait_idle(0);
+	uart_wait_tx_idle_polling(CONFIG_ESP_CONSOLE_UART_NUM);
 	uint64_t us = (uint64_t)timeout * MILLISECOND;
 	esp_sleep_enable_timer_wakeup(us);
+	// Wake up on receive interrupt.
+	gpio_wakeup_enable(DIO2, GPIO_INTR_HIGH_LEVEL);
+	esp_sleep_enable_gpio_wakeup();
 	esp_light_sleep_start();
-	esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
 }
 
 int sleep_receive(uint8_t *buf, int count, int timeout) {
@@ -332,11 +323,28 @@ static void wait_until_interrupt(int timeout) {
 
 #else
 
+static volatile TaskHandle_t rx_waiting_task;
+
+static void rx_interrupt(void *unused) {
+	if (rx_waiting_task != 0) {
+		vTaskNotifyGiveFromISR(rx_waiting_task, 0);
+	}
+}
+
+static void install_isr(void) {
+	static int isr_installed = 0;
+	if (isr_installed) {
+		return;
+	}
+	gpio_install_isr_service(0);
+	gpio_isr_handler_add(DIO2, rx_interrupt, 0);
+	isr_installed = 1;
+}
+
 static void wait_until_interrupt(int timeout) {
+	install_isr();
 	ESP_LOGD(TAG, "waiting until interrupt");
 	rx_waiting_task = xTaskGetCurrentTaskHandle();
-	// Clear any notifications before starting to wait.
-	xTaskNotifyWait(0, 0, 0, 0);
 	xTaskNotifyWait(0, 0, 0, pdMS_TO_TICKS(timeout));
 	rx_waiting_task = 0;
 	ESP_LOGD(TAG, "finished waiting");
