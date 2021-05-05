@@ -2,8 +2,8 @@
 #include <unistd.h>
 
 #include <driver/gpio.h>
+#include <driver/uart.h>
 #include <esp_sleep.h>
-#include <esp32/rom/uart.h>
 
 #include "module.h"
 
@@ -42,7 +42,7 @@ void app_main(void) {
 		sleep(1);
 		gpio_set_level(LED, 0);
 
-		uart_tx_wait_idle(0);
+		uart_wait_tx_idle_polling(CONFIG_ESP_CONSOLE_UART_NUM);
 		// Wake up on button press or 5-second timeout.
 		esp_sleep_enable_timer_wakeup(5000000);
 		esp_light_sleep_start();
