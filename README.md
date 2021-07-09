@@ -77,19 +77,18 @@ git submodule status --recursive
 
 ### Set up a local ESP32 development environment
 
-1. [Follow these instructions to install the ESP-IDF development environment.](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/get-started/index.html#installation-step-by-step)
+1. [Follow these instructions to install the ESP-IDF development environment.](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/get-started/index.html#installation-step-by-step)
 
 1. Build and flash one of the example applications to make sure you have a working setup.
 
 ### Alternative: Use the ESP-IDF Docker image
 
-1. Run `docker pull espressif/idf:release-v4.2` to download the ESP-IDF image.
-[See this page for additional information.](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/api-guides/tools/idf-docker-image.html)
+1. Run `docker pull espressif/idf:release-v4.3` to download the ESP-IDF image.
+[See this page for additional information.](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/api-guides/tools/idf-docker-image.html)
 
 ### Disable OLED support if necessary
 
-OLED use is defined in `include/module.h` and must be commented out if no OLED is available.
-Just add two slashes in front of the statement.
+OLED use is defined in `include/module.h` and must be commented out if no OLED is available:
 
 	// #define OLED_ENABLE
 
@@ -100,7 +99,7 @@ Just add two slashes in front of the statement.
 1. Change to the `project` subdirectory.
 
 1. If using Docker, start an interactive ESP-IDF container for the build by running
-`docker run -it --rm -v $PWD:/project -w /project --device /dev/ttyUSB0 espressif/idf:release-v4.2`
+`docker run -it --rm -v $PWD:/project -w /project --device /dev/ttyUSB0 espressif/idf:release-v4.3`
 
 1. Build the project by running `idf.py build`
 
@@ -187,6 +186,7 @@ The Bluetooth tethering code currently requires
 [the BlueKitchen Bluetooth stack.](https://github.com/bluekitchen/btstack)
 Follow [these instructions](https://github.com/bluekitchen/btstack/blob/master/port/esp32/README.md)
 to integrate it into your ESP-IDF environment.
+If you are using Docker, start your Docker container with a bind-mount for the btstack source tree, so you can integrate it once the container is running.
 
 ### Nightscout configuration
 
