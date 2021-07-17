@@ -14,6 +14,7 @@ esp_http_client_handle_t nightscout_client_handle(void);
 esp_http_client_handle_t xdrip_client_handle(void);
 void nightscout_client_close(esp_http_client_handle_t client);
 
+#define MAX_HTTP_RESPONSE	8192
 char *http_get(esp_http_client_handle_t client, const char *endpoint);
 
 extern time_t http_server_time;

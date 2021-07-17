@@ -19,7 +19,7 @@ char *http_get(esp_http_client_handle_t client, const char *endpoint) {
 		return 0;
 	}
 	int content_length = esp_http_client_fetch_headers(client);
-	static char response[8192];
+	static char response[MAX_HTTP_RESPONSE];
 	char *p = response;
 	int len = content_length;
 	if (len == -1) {

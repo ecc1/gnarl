@@ -8,7 +8,7 @@
 
 void nightscout_upload(esp_http_client_handle_t client, const char *endpoint, const char *json) {
 	int json_len = strlen(json);
-	ESP_LOGD(TAG, "uploading %d bytes to %s: %s", json_len, endpoint, json);
+	ESP_LOGD(TAG, "uploading %d bytes to %s", json_len, endpoint);
 	esp_http_client_set_url(client, endpoint);
 	esp_http_client_set_method(client, HTTP_METHOD_POST);
 	// Content-Type must be set before the POST data.
