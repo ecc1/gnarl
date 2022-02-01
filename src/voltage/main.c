@@ -12,7 +12,9 @@ void display_voltage(int mV, int raw) {
 	voltage_string(mV, buf);
 	oled_draw_string(OLED_WIDTH/2, 30, buf);
 	oled_font_small();
-	sprintf(buf, "raw:  %4d    0x%03X\n", raw, raw);
+	sprintf(buf, "%d%%", voltage_level(mV));
+	oled_draw_string(OLED_WIDTH/2, 45, buf);
+	sprintf(buf, "raw:  %4d    0x%03X", raw, raw);
 	oled_draw_string(OLED_WIDTH/2, 60, buf);
 	oled_update();
 }

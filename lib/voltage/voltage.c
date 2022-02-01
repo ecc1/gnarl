@@ -47,3 +47,17 @@ char *voltage_string(int mV, char *buf) {
 	sprintf(p, "%d.%02d V", v, cv);
 	return buf;
 }
+
+// Voltage may exceed these bounds while charging from USB.
+#define MIN_BAT	3300
+#define MAX_BAT	4000
+
+int voltage_level(int mV) {
+	if (mV <= MIN_BAT) {
+		return 0;
+	}
+	if (mV >= MAX_BAT) {
+		return 100;
+	}
+	return 100 * (mV - MIN_BAT) / (MAX_BAT - MIN_BAT);
+}
