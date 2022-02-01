@@ -79,4 +79,8 @@ void upload_device_status(esp_http_client_handle_t client, nightscout_device_sta
 
 void nightscout_upload(esp_http_client_handle_t client, const char *endpoint, const char *json);
 
+#ifdef NIGHTSCOUT_DEBUG
+#define cJSON_PrintUnformatted	cJSON_Print
+#endif
+
 #endif // _NIGHTSCOUT_H
