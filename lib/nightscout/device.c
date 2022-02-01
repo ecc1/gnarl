@@ -12,7 +12,7 @@ static char *device_status_json(nightscout_device_status_t *s) {
 	char ts[ISO_TIME_STRING_SIZE];
 	print_iso_time(ts, s->tv);
 	cJSON_AddItemToObject(root, "created_at", cJSON_CreateString(ts));
-	cJSON_AddItemToObject(root, "device",  cJSON_CreateString("openaps://GNARL"));
+	cJSON_AddItemToObject(root, "device",  cJSON_CreateString("GNARL"));
 
 	cJSON *openaps = cJSON_CreateObject();
 	cJSON_AddItemToObject(root, "openaps", openaps);
