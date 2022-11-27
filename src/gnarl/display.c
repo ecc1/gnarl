@@ -130,6 +130,7 @@ void display_init(void) {
 	// Enable interrupt on button press.
 	gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
 	gpio_set_intr_type(BUTTON, GPIO_INTR_NEGEDGE);
+	gpio_install_isr_service(0);
 	gpio_isr_handler_add(BUTTON, button_interrupt, 0);
 	gpio_intr_enable(BUTTON);
 }
