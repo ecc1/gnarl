@@ -77,14 +77,14 @@ git submodule status --recursive
 
 ### Set up a local ESP32 development environment
 
-1. [Follow these instructions to install the ESP-IDF development environment.](https://docs.espressif.com/projects/esp-idf/en/release-v4.4/esp32/get-started/index.html#installation-step-by-step)
+1. [Follow these instructions to install the ESP-IDF development environment.](https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/get-started/index.html#installation-step-by-step)
 
 1. Build and flash one of the example applications to make sure you have a working setup.
 
 ### Alternative: Use the ESP-IDF Docker image
 
-1. Run `docker pull espressif/idf:release-v4.4` to download the ESP-IDF image.
-[See this page for additional information.](https://docs.espressif.com/projects/esp-idf/en/release-v4.4/esp32/api-guides/tools/idf-docker-image.html)
+1. Run `docker pull espressif/idf:v5.0` to download the ESP-IDF image.
+[See this page for additional information.](https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-guides/tools/idf-docker-image.html)
 
 ### Disable OLED support if necessary
 
@@ -99,7 +99,7 @@ OLED use is defined in `include/module.h` and must be commented out if no OLED i
 1. Change to the `project` subdirectory.
 
 1. If using Docker, start an interactive ESP-IDF container for the build by running
-`docker run -it --rm -v $PWD:/project -w /project --device /dev/ttyUSB0 espressif/idf:release-v4.3`
+`docker run -it --rm -v $PWD:/project -w /project --device /dev/ttyUSB0 espressif/idf:v5.0`
 
 1. Build the project by running `idf.py build`
 
