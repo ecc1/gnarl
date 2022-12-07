@@ -58,7 +58,7 @@ void app_main(void) {
 	pump_set_id(PUMP_ID);
 	rfm95_init();
 	set_frequency(PUMP_FREQUENCY);
-	printf("frequency set to %d Hz\n", read_frequency());
+	printf("frequency set to %lu Hz\n", read_frequency());
 	get_time();
 	for (;;) {
 		display_info();

@@ -13,7 +13,7 @@ int rssi;
 
 int try_frequency(uint32_t frequency) {
 	set_frequency(frequency);
-	printf("frequency set to %d Hz\n", read_frequency());
+	printf("frequency set to %lu Hz\n", read_frequency());
 	printf("waking pump %s\n", PUMP_ID);
 	if (model == 0 && !pump_wakeup()) {
 		printf("wakeup failed\n");
@@ -80,7 +80,7 @@ void app_main(void) {
 		oled_update();
 		usleep(1 * SECONDS);
 	}
-	printf("Best frequency %d Hz\n", best_freq);
+	printf("Best frequency %lu Hz\n", best_freq);
 	printf("RSSI: %d\n", best_rssi);
 	oled_draw_string(0, 20, "Scanning... done.");
 	usleep(100);
@@ -92,7 +92,7 @@ void app_main(void) {
 	oled_align_left();
 	sprintf(str, "Best RSSI: %d", best_rssi);
 	oled_draw_string(0, 20, str);
-	sprintf(str, "Best Freq: %d.%03d", FP_FQ(best_freq));
+	sprintf(str, "Best Freq: %lu.%03lu", FP_FQ(best_freq));
 	oled_draw_string(0, 40, str);
 	usleep(100);
 	oled_update();

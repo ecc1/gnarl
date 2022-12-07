@@ -16,7 +16,7 @@ void app_main(void) {
 	uint8_t v = read_version();
 	printf("radio version %d.%d\n", version_major(v), version_minor(v));
 	set_frequency(PUMP_FREQUENCY);
-	printf("frequency set to %d Hz\n", read_frequency());
+	printf("frequency set to %lu Hz\n", read_frequency());
 	for (;;) {
 		esp_task_wdt_reset();
 		int n = sleep_receive(rx_buf, sizeof(rx_buf), TIMEOUT);

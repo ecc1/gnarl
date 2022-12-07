@@ -1,6 +1,5 @@
 #include <unistd.h>
 
-#include <esp_nimble_hci.h>
 #include <esp_timer.h>
 #include <host/ble_gap.h>
 #include <host/util/util.h>
@@ -169,7 +168,7 @@ static int read_timer_chr(uint16_t conn_handle, uint16_t attr_handle, struct ble
 	assert(ble_uuid_cmp(ctxt->chr->uuid, &timer_uuid.u) == 0);
 	assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
 	uint32_t ms = esp_timer_get_time() / 1000;
-	printf("timer value = %u\n", ms);
+	printf("timer value = %lu\n", ms);
 	if (os_mbuf_append(ctxt->om, &ms, sizeof(ms)) != 0) {
 		return BLE_ATT_ERR_INSUFFICIENT_RES;
 	}
@@ -192,7 +191,6 @@ static int read_cpf_dsc(uint16_t conn_handle, uint16_t attr_handle, struct ble_g
 
 void app_main(void) {
 	ESP_ERROR_CHECK(nvs_flash_init());
-	ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
 	nimble_port_init();
 
 	ble_hs_cfg.sync_cb = sync_callback;

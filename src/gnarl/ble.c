@@ -466,7 +466,6 @@ void gnarl_init(void) {
 	start_gnarl_task();
 
 	ESP_ERROR_CHECK(nvs_flash_init());
-	ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
 	nimble_port_init();
 
 	ble_hs_cfg.sync_cb = sync_callback;

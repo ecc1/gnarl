@@ -173,7 +173,7 @@ static volatile int in_get_packet = 0;
 static void get_packet(const uint8_t *buf, int len) {
 	get_packet_cmd_t *p = (get_packet_cmd_t *)buf;
 	reverse_four_bytes(&p->timeout_ms);
-	ESP_LOGD(TAG, "get_packet: listen_channel %d timeout_ms %d",
+	ESP_LOGD(TAG, "get_packet: listen_channel %d timeout_ms %lu",
 		 p->listen_channel, p->timeout_ms);
 	in_get_packet = 1;
 	int n = receive(rx_buf.packet, sizeof(rx_buf.packet), p->timeout_ms);
@@ -198,7 +198,7 @@ static void send_and_listen(const uint8_t *buf, int len) {
 	reverse_two_bytes(&p->preamble_ms);
 	ESP_LOGD(TAG, "send_and_listen: len %d send_channel %d repeat_count %d delay_ms %d",
 		 len, p->send_channel, p->repeat_count, p->delay_ms);
-	ESP_LOGD(TAG, "send_and_listen: listen_channel %d timeout_ms %d retry_count %d",
+	ESP_LOGD(TAG, "send_and_listen: listen_channel %d timeout_ms %lu retry_count %d",
 		 p->listen_channel, p->timeout_ms, p->retry_count);
 	len -= (p->packet - (uint8_t *)p);
 	send(p->packet, len, p->repeat_count, p->delay_ms);
@@ -232,10 +232,10 @@ static void check_frequency(void) {
 	uint32_t f = ((uint32_t)fr[0] << 16) + ((uint32_t)fr[1] << 8) + ((uint32_t)fr[2]);
 	uint32_t freq = (uint32_t)(((uint64_t)f * 24*MHz) >> 16);
 	if (valid_frequency(freq)) {
-		ESP_LOGI(TAG, "setting frequency to %d Hz", freq);
+		ESP_LOGI(TAG, "setting frequency to %lu Hz", freq);
 		set_frequency(freq);
 	} else {
-		ESP_LOGD(TAG, "invalid frequency (%d Hz)", freq);
+		ESP_LOGD(TAG, "invalid frequency (%lu Hz)", freq);
 	}
 }
 
@@ -300,7 +300,7 @@ static void send_stats() {
 	// From rfm95:
 	statistics.packet_rx_count = rx_packet_count();
 	statistics.packet_tx_count = tx_packet_count();
-	ESP_LOGD(TAG, "send_stats len %d uptime %d rx %d tx %d",
+	ESP_LOGD(TAG, "send_stats len %d uptime %lu rx %d tx %d",
 		 sizeof(statistics), statistics.uptime,
 		 statistics.packet_rx_count, statistics.packet_tx_count);
 	reverse_four_bytes(&statistics.uptime);

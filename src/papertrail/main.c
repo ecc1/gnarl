@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <esp_err.h>
 
 #include "network.h"
 #include "papertrail.h"
