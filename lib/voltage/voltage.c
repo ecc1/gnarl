@@ -16,11 +16,26 @@
 static esp_adc_cal_characteristics_t *adc_chars;
 
 void voltage_init(void) {
+#ifdef BROKEN
 	adc1_config_width(ADC_WIDTH_BIT_12);
 	// 0 dB attenuation = 0 to 1.1V voltage range
 	adc1_config_channel_atten(ADC_PIN, ADC_ATTEN_DB_0);
 	adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
-	esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_0, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_chars);
+	esp_adc_cal_value_t cal = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_0, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_chars);
+	const char *cal_type;
+	switch (cal) {
+	case ESP_ADC_CAL_VAL_EFUSE_VREF:
+		cal_type = "eFuse Vref";
+		break;
+	case ESP_ADC_CAL_VAL_EFUSE_TP:
+		cal_type = "eFuse two point";
+		break;
+	default:
+		cal_type = "default";
+		break;
+	}
+	ESP_LOGI(TAG, "ADC calibration: %s", cal_type);
+#endif // BROKEN
 }
 
 int voltage_read(int *rawp) {

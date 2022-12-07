@@ -65,7 +65,7 @@ static void send_next_packet(void) {
 	static uint8_t buffer[HCI_ACL_PAYLOAD_SIZE];
 	uint32_t len = btstack_min(sizeof(buffer), next_packet->tot_len);
 	pbuf_copy_partial(next_packet, buffer, len, 0);
-	ESP_LOGD(TAG, "send_next_packet: bnep_send %d bytes", len);
+	ESP_LOGD(TAG, "send_next_packet: bnep_send %lu bytes", len);
 	bnep_send(bnep_cid, buffer, len);
 	packet_processed();
 	if (uxQueueMessagesWaiting(outgoing_queue) != 0) {

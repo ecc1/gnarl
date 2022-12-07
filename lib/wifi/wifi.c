@@ -54,7 +54,7 @@ static void handle_ip_event(void* arg, esp_event_base_t event_base, int32_t even
 		}
 		break;
 	default:
-		ESP_LOGD(TAG, "unexpected IP_EVENT %d", event_id);
+		ESP_LOGD(TAG, "unexpected IP_EVENT %ld", event_id);
 		break;
 	}
 }

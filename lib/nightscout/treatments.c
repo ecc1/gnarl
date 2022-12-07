@@ -51,7 +51,7 @@ static char *treatment_json(nightscout_treatment_t *t) {
 
 	cJSON_AddItemToObject(root, "enteredBy",  cJSON_CreateString(NIGHTSCOUT_USER));
 
-	char *e;
+	const char *e;
 	switch (t->type) {
 	case NS_BG_CHECK:
 		e = "BG Check";

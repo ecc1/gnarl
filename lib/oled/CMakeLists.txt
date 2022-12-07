@@ -1,5 +1,5 @@
 idf_component_register(
 	INCLUDE_DIRS .
 	SRC_DIRS .
-	PRIV_REQUIRES u8g2
+	PRIV_REQUIRES driver u8g2
 )

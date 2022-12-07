@@ -53,7 +53,7 @@ static void handle_sdp_query_result(uint8_t packet_type, uint16_t channel, uint8
 				case BLUETOOTH_SERVICE_CLASS_NAP:
 				case BLUETOOTH_SERVICE_CLASS_GN:
 					bnep_remote_uuid = uuid;
-					ESP_LOGI(TAG, "BNEP remote uuid = %04x", bnep_remote_uuid);
+					ESP_LOGI(TAG, "BNEP remote uuid = %04lx", bnep_remote_uuid);
 					break;
 				}
 			}
